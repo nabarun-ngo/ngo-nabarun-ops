@@ -1,0 +1,34 @@
+name: 'Run Automated Test'
+on:
+  workflow_dispatch:
+    inputs:
+     target_env:
+       required: true
+       description: 'Env'
+       type: choice
+       options:
+         - stage
+         - prod
+     cucumber_tags:
+       description: 'Cucumber Tags'
+       required: true
+       type: string
+     test_cycle_id:
+       description: 'Test Cycle'
+       required: true
+       type: string
+       default: 'NAB-TR-2' 
+
+jobs:
+  run_automated_test:
+    name: Run Automation Test 
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
+    with:
+        test_env: ${{ github.event.inputs.target_env }}
+        test_doppler_project_name: 'nabarun_test'
+        test_cycle: ${{ github.event.inputs.test_cycle_id }}
+        upload_result: true 
+        test_cucumber_tags: ${{ github.event.inputs.cucumber_tags}}
+    secrets:
+      test_doppler_service_token: ${{ github.event.inputs.target_env == 'PROD' && secrets.DOPPLER_TEST_SERVICE_TOKEN || secrets.DOPPLER_TEST_SERVICE_TOKEN_STAGE }}
+      qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
