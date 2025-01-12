@@ -1,4 +1,4 @@
-name: 'Run Automated Test'
+name: 'Manual Trigger : Run Automated Test'
 on:
   workflow_dispatch:
     inputs:
