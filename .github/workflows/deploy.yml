@@ -93,7 +93,7 @@ jobs:
     with:
         test_env: ${{ github.event.inputs.target_env == 'prod' && 'prod' || 'stage' }}
         test_doppler_project_name: 'nabarun_test'
-        test_cycle: ${{ github.event.inputs.target_env == 'prod' && 'NAB-TR-3' || 'NAB-TR-1' }}
+        test_cycle: ${{ github.event.inputs.target_env == 'prod' && vars.SMOKE_TEST_CYCLE_PROD || vars.SMOKE_TEST_CYCLE_STAGE }}
         upload_result: true 
         test_cucumber_tags: ${{ github.event.inputs.cucumber_tags}}
         app_ui_version:  ${{ github.event.inputs.fe_tag_name }}
