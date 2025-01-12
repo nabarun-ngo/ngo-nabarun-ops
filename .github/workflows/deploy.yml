@@ -1,4 +1,4 @@
-name: 'Manual : Deploy to GCP (GAE), Firebase, Sync Env, SmokeTest'
+name: 'Manual Trigger : Deploy to GCP (GAE), Firebase (Hosting), Sync Env (Auth0,Remote Config), SmokeTest'
 on:
   workflow_dispatch:
     inputs:
