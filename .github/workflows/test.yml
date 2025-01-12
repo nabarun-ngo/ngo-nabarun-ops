@@ -9,11 +9,6 @@ on:
        options:
          - stage
          - prod
-     cucumber_tags:
-       description: 'Cucumber Tags'
-       required: true
-       type: string
-       default: '@regression'
      test_type:
        required: true
        description: 'Test Type'
@@ -21,6 +16,12 @@ on:
        options:
          - Regression
          - Smoke
+     
+     cucumber_tags:
+       description: 'Cucumber Tags'
+       required: false
+       type: string
+       default: ''
 
 jobs:
    run_automated_test:
@@ -32,7 +33,7 @@ jobs:
         test_doppler_project_name: 'nabarun_test'
         test_cycle: ${{ github.event.inputs.test_type == 'Smoke' && vars.SMOKE_TEST_CYCLE_STAGE || vars.REGRESSION_TEST_CYCLE_STAGE }}
         upload_result: true 
-        test_cucumber_tags: ${{ github.event.inputs.cucumber_tags}}
+        test_cucumber_tags: ${{ github.event.inputs.cucumber_tags != '' && github.event.inputs.cucumber_tags || (github.event.inputs.test_type == 'Smoke' && '@smoke' || '@regression') }}
         test_type: ${{ github.event.inputs.test_type }}
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TEST_SERVICE_TOKEN_STAGE }}
