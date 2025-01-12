@@ -14,11 +14,6 @@ on:
        required: true
        type: string
        default: '@regression'
-     test_cycle_id:
-       description: 'Test Cycle'
-       required: true
-       type: string
-       default: 'NAB-TR-2' 
      test_type:
        required: true
        description: 'Test Type'
