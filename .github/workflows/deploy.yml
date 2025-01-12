@@ -96,6 +96,8 @@ jobs:
         test_cycle: ${{ github.event.inputs.target_env == 'prod' && 'NAB-TR-3' || 'NAB-TR-1' }}
         upload_result: true 
         test_cucumber_tags: ${{ github.event.inputs.cucumber_tags}}
+        app_ui_version:  ${{ github.event.inputs.fe_tag_name }}
+        app_server_version: ${{ github.event.inputs.be_tag_name }}
     secrets:
       test_doppler_service_token: ${{ github.event.inputs.target_env == 'prod' && secrets.DOPPLER_TEST_SERVICE_TOKEN || secrets.DOPPLER_TEST_SERVICE_TOKEN_STAGE }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
