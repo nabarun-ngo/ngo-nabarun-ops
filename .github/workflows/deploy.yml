@@ -58,7 +58,7 @@ jobs:
      npm_run_command: ${{ github.event.inputs.target_env == 'prod' && 'build' || 'buildstage' }}
     secrets:
       firebase_service_account: ${{ github.event.inputs.target_env == 'prod' && secrets.NABARUN_FIREBASE_SERVICE_ACCOUNT || secrets.NABARUN_FIREBASE_SERVICE_ACCOUNT_STAGE }}
-  
+      repo_token: ${{ secrets.GITHUB_TOKEN }}
   gcp_deploy:
     if: github.event.inputs.be_deploy == 'Y'
     name: Deploy to GCP App Engine 
