@@ -1,0 +1,33 @@
+name: Manually Sync Data between Auth0 Tenants
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tenant:
+        description: 'Source Tenant'
+        required: true
+        type: choice
+        options:
+          - DEV
+          - STAGE
+          - PROD
+      dest_tenant:
+        description: 'Destination Tenant'
+        required: true
+        type: choice
+        options:
+          - DEV
+          - STAGE
+          - PROD
+
+jobs:
+  sync_data:
+      uses: nabarun-ngo/ngo-nabarun-devops/.github/workflows/Auth0-Sync.yml@main
+      with:
+        branch_name: 'main'
+        target_folder: 'target'
+        auth0_source_tenant: ${{ github.event.inputs.target_tenant }}
+        auth0_dest_tenant:  ${{ github.event.inputs.dest_tenant }}
+      secrets:
+        auth0_secrets: ${{ secrets.AUTH0_CREDENTIALS }}
+   
