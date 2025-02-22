@@ -1,5 +1,6 @@
 name: '[Trigger] Sync & Import Data | Auth0 Tenants | FB Remote Config'
 on:
+  repository_dispatch: [test]
   workflow_dispatch:
     inputs:
       auth0_import_permission:
