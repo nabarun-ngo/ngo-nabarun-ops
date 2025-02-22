@@ -83,6 +83,6 @@ jobs:
           import_user: $auth0_import_users
           delete_old_user: $auth0_delete_users_before_import
           doppler_project: $doppler_project
-          doppler_service_token: ${{ auth0_dest_tenant == 'DEV' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE }}
+          doppler_service_token: ${{ $auth0_dest_tenant == 'DEV' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE }}
           gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
    
