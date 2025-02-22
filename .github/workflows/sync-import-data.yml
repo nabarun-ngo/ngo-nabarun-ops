@@ -3,22 +3,27 @@ on:
   workflow_dispatch:
     inputs:
       auth0_import_permission:
-        description: "Import Permissions to AUTH0 (Requires 'Auth0 Destination Tenant')"
+        description: "Import Permissions to AUTH0"
         required: true
         default: false
         type: boolean
       auth0_import_users:
-        description: "Import Users to AUTH0 (Requires 'Auth0 Destination Tenant')"
+        description: "Import Users to AUTH0"
+        required: true
+        default: false
+        type: boolean
+      auth0_delete_users_before_import:
+        description: "Delete Users before AUTH0 Import"
         required: true
         default: false
         type: boolean
       auth0_sync_tenant:
-        description: "Sync AUTH0 Tenants (Requires 'Auth0 Source Tenant' and 'Auth0 Destination Tenant')"
+        description: "Sync AUTH0 Tenants"
         required: true
         default: false
         type: boolean
       firebase_sync_rc:
-        description: "Sync Firebase Remote Config (Requires 'Firebase Source Environment' and 'Firebase Destination Environment')"
+        description: "Sync Firebase Remote Config"
         required: true
         default: false
         type: boolean
@@ -53,13 +58,31 @@ on:
            - PROD
 
 jobs:
-  sync_data:
-      uses: nabarun-ngo/ngo-nabarun-devops/.github/workflows/Auth0-Sync.yml@main
-      with:
-        branch_name: 'main'
-        target_folder: 'target'
-        auth0_source_tenant: ${{ github.event.inputs.target_tenant }}
-        auth0_dest_tenant:  ${{ github.event.inputs.dest_tenant }}
-      secrets:
-        auth0_secrets: ${{ secrets.AUTH0_CREDENTIALS }}
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      auth0_import_permission: ${{ github.event.client_payload.auth0_import_permission || github.event.inputs.auth0_import_permission }}
+      auth0_import_users: ${{ github.event.client_payload.auth0_import_users || github.event.inputs.auth0_import_users }}
+      auth0_sync_tenant: ${{ github.event.client_payload.auth0_sync_tenant || github.event.inputs.auth0_sync_tenant }}
+      firebase_sync_rc: ${{ github.event.client_payload.firebase_sync_rc || github.event.inputs.firebase_sync_rc }}
+      auth0_delete_users_before_import: ${{ github.event.client_payload.auth0_delete_users_before_import || github.event.inputs.auth0_delete_users_before_import }}
+      auth0_source_tenant: ${{ github.event.client_payload.auth0_source_tenant || github.event.inputs.auth0_source_tenant }}
+      auth0_dest_tenant: ${{ github.event.client_payload.auth0_dest_tenant || github.event.inputs.auth0_dest_tenant }}
+      firebase_source_env: ${{ github.event.client_payload.firebase_source_env || github.event.inputs.firebase_source_env }}
+      firebase_dest_env: ${{ github.event.client_payload.firebase_dest_env || github.event.inputs.firebase_dest_env }} 
+          
+  import_data:
+        needs: setup
+        uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
+        with:
+              branch_name: 'main'
+              source: 'google_drive'
+              auth0_import_tenant: ''
+              input_file: ''
+              import_data: ''
+              import_user: ''
+              delete_old_user: ''
+              doppler_project: ''
+              doppler_service_token: ${{ secrets.DOPPLER_CONFIG_ }}
+              gcp_service_account: ${{ secrets.AUTH0_CREDENTIALS }}
    
