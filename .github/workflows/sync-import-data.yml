@@ -58,21 +58,8 @@ on:
            - PROD
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      auth0_import_permission: ${{ github.event.client_payload.auth0_import_permission || github.event.inputs.auth0_import_permission }}
-      auth0_import_users: ${{ github.event.client_payload.auth0_import_users || github.event.inputs.auth0_import_users }}
-      auth0_sync_tenant: ${{ github.event.client_payload.auth0_sync_tenant || github.event.inputs.auth0_sync_tenant }}
-      firebase_sync_rc: ${{ github.event.client_payload.firebase_sync_rc || github.event.inputs.firebase_sync_rc }}
-      auth0_delete_users_before_import: ${{ github.event.client_payload.auth0_delete_users_before_import || github.event.inputs.auth0_delete_users_before_import }}
-      auth0_source_tenant: ${{ github.event.client_payload.auth0_source_tenant || github.event.inputs.auth0_source_tenant }}
-      auth0_dest_tenant: ${{ github.event.client_payload.auth0_dest_tenant || github.event.inputs.auth0_dest_tenant }}
-      firebase_source_env: ${{ github.event.client_payload.firebase_source_env || github.event.inputs.firebase_source_env }}
-      firebase_dest_env: ${{ github.event.client_payload.firebase_dest_env || github.event.inputs.firebase_dest_env }} 
-          
+       
   import_data:
-        needs: setup
         uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
         with:
               branch_name: 'main'
