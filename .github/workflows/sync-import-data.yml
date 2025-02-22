@@ -1,6 +1,8 @@
 name: '[Trigger] Sync & Import Data | Auth0 Tenants | FB Remote Config'
+
 on:
-  repository_dispatch: [test]
+  repository_dispatch:
+    types: [test]
   workflow_dispatch:
     inputs:
       auth0_import_permission:
@@ -58,32 +60,42 @@ on:
            - STAGE
            - PROD
 
-env:
-  auth0_import_permission: ${{ github.event.client_payload.auth0_import_permission || github.event.inputs.auth0_import_permission }}
-  auth0_import_users: ${{ github.event.client_payload.auth0_import_users || github.event.inputs.auth0_import_users }}
-  auth0_sync_tenant: ${{ github.event.client_payload.auth0_sync_tenant || github.event.inputs.auth0_sync_tenant }}
-  firebase_sync_rc: ${{ github.event.client_payload.firebase_sync_rc || github.event.inputs.firebase_sync_rc }}
-  auth0_delete_users_before_import: ${{ github.event.client_payload.auth0_delete_users_before_import || github.event.inputs.auth0_delete_users_before_import }}
-  auth0_source_tenant: ${{ github.event.client_payload.auth0_source_tenant || github.event.inputs.auth0_source_tenant }}
-  auth0_dest_tenant: ${{ github.event.client_payload.auth0_dest_tenant || github.event.inputs.auth0_dest_tenant }}
-  firebase_source_env: ${{ github.event.client_payload.firebase_source_env || github.event.inputs.firebase_source_env }}
-  firebase_dest_env: ${{ github.event.client_payload.firebase_dest_env || github.event.inputs.firebase_dest_env }} 
-  input_file: 'Application_Access_Management.xlsx'
-  doppler_project: 'nabarun_tools'
-
 jobs:   
    import_data:
-      if: $auth0_import_permission || $auth0_import_users
+      runs-on: ubuntu-latest
+      if: ${{ github.event.client_payload.auth0_import_permission || github.event.client_payload.auth0_import_users || inputs.auth0_import_permission || inputs.auth0_import_users }}
+      steps:
+        - name: Set Environment Variables
+          run: |
+            echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || inputs.auth0_import_permission }}" >> $GITHUB_ENV
+            echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || inputs.auth0_import_users }}" >> $GITHUB_ENV
+            echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || inputs.auth0_sync_tenant }}" >> $GITHUB_ENV
+            echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || inputs.firebase_sync_rc }}" >> $GITHUB_ENV
+            echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || inputs.auth0_delete_users_before_import }}" >> $GITHUB_ENV
+            echo "auth0_source_tenant=${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}" >> $GITHUB_ENV
+            echo "auth0_dest_tenant=${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}" >> $GITHUB_ENV
+            echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}" >> $GITHUB_ENV
+            echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}" >> $GITHUB_ENV
+            echo "input_file=Application_Access_Management.xlsx" >> $GITHUB_ENV
+            echo "doppler_project=nabarun_tools" >> $GITHUB_ENV
+
+        - name: Set Doppler Service Token
+          run: |
+            if [[ "${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}" == "DEV" ]]; then
+              echo "doppler_service_token=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}" >> $GITHUB_ENV
+            else
+              echo "doppler_service_token=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE }}" >> $GITHUB_ENV
+            fi
+
       uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
       with:
           branch_name: 'main'
           source: 'google_drive'
-          auth0_import_tenant: $auth0_dest_tenant
-          input_file: $input_file
-          import_data: $auth0_import_permission
-          import_user: $auth0_import_users
-          delete_old_user: $auth0_delete_users_before_import
-          doppler_project: $doppler_project
-          doppler_service_token: ${{ $auth0_dest_tenant == 'DEV' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE }}
+          auth0_import_tenant: ${{ env.auth0_dest_tenant }}
+          input_file: ${{ env.input_file }}
+          import_data: ${{ env.auth0_import_permission }}
+          import_user: ${{ env.auth0_import_users }}
+          delete_old_user: ${{ env.auth0_delete_users_before_import }}
+          doppler_project: ${{ env.doppler_project }}
+          doppler_service_token: ${{ env.doppler_service_token }}
           gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
-   
