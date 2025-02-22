@@ -3,26 +3,54 @@ on:
   workflow_dispatch:
     inputs:
       auth0_import_permission:
-        description: "Import Permissions to AUTH0"
+        description: "Import Permissions to AUTH0 (Requires 'Auth0 Destination Tenant')"
         required: true
         default: false
         type: boolean
-      source_tenant:
-        description: 'Source Tenant'
+      auth0_import_users:
+        description: "Import Users to AUTH0 (Requires 'Auth0 Destination Tenant')"
+        required: true
+        default: false
+        type: boolean
+      auth0_sync_tenant:
+        description: "Sync AUTH0 Tenants (Requires 'Auth0 Source Tenant' and 'Auth0 Destination Tenant')"
+        required: true
+        default: false
+        type: boolean
+      firebase_sync_rc:
+        description: "Sync Firebase Remote Config (Requires 'Firebase Source Environment' and 'Firebase Destination Environment')"
+        required: true
+        default: false
+        type: boolean
+      auth0_source_tenant:
+        description: 'Auth0 Source Tenant'
         required: true
         type: choice
         options:
           - DEV
           - STAGE
           - PROD
-      dest_tenant:
-        description: 'Destination Tenant'
+      auth0_dest_tenant:
+        description: 'Auth0 Destination Tenant'
         required: true
         type: choice
         options:
           - DEV
           - STAGE
+      firebase_source_env:
+        description: 'Firebase Source Environment'
+        required: true
+        type: choice
+        options:
+          - STAGE
           - PROD
+      firebase_dest_env:
+        description: 'Firebase Destination Environment'
+        required: true
+        type: choice
+        options:
+           - STAGE
+           - PROD
 
 jobs:
   sync_data:
