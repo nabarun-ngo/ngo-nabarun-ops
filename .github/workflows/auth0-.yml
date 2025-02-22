@@ -1,8 +1,12 @@
-name: Manually Sync Data between Auth0 Tenants
-
+name: '[Trigger] Sync & Import Data | Auth0 Tenants | FB Remote Config'
 on:
   workflow_dispatch:
     inputs:
+      enable_feature:
+        description: "Enable the feature? (true = checked, false = unchecked)"
+        required: false
+        default: false
+        type: boolean
       source_tenant:
         description: 'Source Tenant'
         required: true
