@@ -2,9 +2,9 @@ name: '[Trigger] Sync & Import Data | Auth0 Tenants | FB Remote Config'
 on:
   workflow_dispatch:
     inputs:
-      enable_feature:
-        description: "Enable the feature? (true = checked, false = unchecked)"
-        required: false
+      auth0_import_permission:
+        description: "Import Permissions to AUTH0"
+        required: true
         default: false
         type: boolean
       source_tenant:
