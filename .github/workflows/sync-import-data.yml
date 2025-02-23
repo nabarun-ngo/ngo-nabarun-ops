@@ -20,13 +20,15 @@ on:
         required: true
         default: false
         type: boolean
+      auth0_target_tenant:
+        description: 'Auth0 Target Tenant'
+        required: true
+        type: choice
+        options:
+          - DEV
+          - STAGE
       auth0_sync_tenant:
         description: "Sync AUTH0 Tenants"
-        required: true
-        default: false
-        type: boolean
-      firebase_sync_rc:
-        description: "Sync Firebase Remote Config"
         required: true
         default: false
         type: boolean
@@ -45,6 +47,12 @@ on:
         options:
           - DEV
           - STAGE
+          - PROD
+      firebase_sync_rc:
+        description: "Sync Firebase Remote Config"
+        required: true
+        default: false
+        type: boolean
       firebase_source_env:
         description: 'Firebase Source Environment'
         required: true
@@ -69,6 +77,7 @@ jobs:
       auth0_delete_users_before_import: ${{ steps.set_vars.outputs.auth0_delete_users_before_import }}
       auth0_sync_tenant: ${{ steps.set_vars.outputs.auth0_sync_tenant }}
       firebase_sync_rc: ${{ steps.set_vars.outputs.firebase_sync_rc }}
+      auth0_target_tenant: ${{ steps.set_vars.outputs.auth0_target_tenant }}
       auth0_source_tenant: ${{ steps.set_vars.outputs.auth0_source_tenant }}
       auth0_dest_tenant: ${{ steps.set_vars.outputs.auth0_dest_tenant }}
       firebase_source_env: ${{ steps.set_vars.outputs.firebase_source_env }}
@@ -87,6 +96,7 @@ jobs:
             echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || inputs.auth0_delete_users_before_import }}"
             echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || inputs.auth0_sync_tenant }}"
             echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || inputs.firebase_sync_rc }}"
+            echo "auth0_target_tenant=${{ github.event.client_payload.auth0_target_tenant || inputs.auth0_target_tenant }}"
             echo "auth0_source_tenant=${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}"
             echo "auth0_dest_tenant=${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}"
             echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}"
@@ -119,14 +129,14 @@ jobs:
     with:
       branch_name: 'main'
       source: 'google_drive'
-      auth0_import_tenant: ${{ needs.set_env.outputs.auth0_dest_tenant }}
+      auth0_import_tenant: ${{ needs.set_env.outputs.auth0_target_tenant }}
       input_file: ${{ needs.set_env.outputs.input_file }}
       import_data: ${{ needs.set_env.outputs.auth0_import_permission }}
       import_user: ${{ needs.set_env.outputs.auth0_import_users }}
       delete_old_user: ${{ needs.set_env.outputs.auth0_delete_users_before_import }}
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
     secrets:
-      doppler_service_token: ${{ needs.set_env.outputs.doppler_service_token_dest_a0 }}
+      doppler_service_token: ${{ needs.set_env.outputs.auth0_target_tenant == 'STAGE' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
 
   sync_data_auth0:
