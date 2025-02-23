@@ -135,6 +135,7 @@ jobs:
       import_user: ${{ needs.set_env.outputs.auth0_import_users }}
       delete_old_user: ${{ needs.set_env.outputs.auth0_delete_users_before_import }}
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
+      dry_run: true
     secrets:
       doppler_service_token: ${{ needs.set_env.outputs.auth0_target_tenant == 'STAGE' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
@@ -149,6 +150,7 @@ jobs:
       auth0_source_tenant: ${{ needs.set_env.outputs.auth0_source_tenant }}
       auth0_dest_tenant: ${{ needs.set_env.outputs.auth0_dest_tenant }}
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
+      dry_run: true
     secrets:
       doppler_service_token_source: ${{ needs.set_env.outputs.doppler_service_token_source_a0 }}
       doppler_service_token_dest: ${{ needs.set_env.outputs.doppler_service_token_dest_a0 }}
