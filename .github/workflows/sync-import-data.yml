@@ -93,17 +93,17 @@ jobs:
             echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}"
 
             if [[ $auth0_source_tenant == PROD ]]; then
-              echo "doppler_service_token_source=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_PROD }}"
+              echo "doppler_service_token_source=source_prod"
             else if [[ $auth0_source_tenant == STAGE ]]; then
-              echo "doppler_service_token_source=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE }}"
+              echo "doppler_service_token_source=source_stage"
             else
-              echo "doppler_service_token_dest=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}"
+              echo "doppler_service_token_dest=source_dev"
             fi
 
             if [[ $auth0_dest_tenant == STAGE ]]; then
-              echo "doppler_service_token_dest=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE }}"
+              echo "doppler_service_token_dest=deststage"
             else
-              echo "doppler_service_token_dest=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}"
+              echo "doppler_service_token_dest=destdev"
             fi
           } >> $GITHUB_OUTPUT
 
