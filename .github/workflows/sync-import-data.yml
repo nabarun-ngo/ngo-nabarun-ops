@@ -93,7 +93,7 @@ jobs:
             echo "input_file=Application_Access_Management.xlsx"
             echo "doppler_project=nabarun_tools"
 
-            if [[ "${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}" == "DEV" ]]; then
+            if [[ $auth0_dest_tenant == DEV ]]; then
               echo "doppler_service_token=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}"
             else
               echo "doppler_service_token=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE }}"
@@ -113,5 +113,6 @@ jobs:
       import_user: ${{ needs.set_env.outputs.auth0_import_users }}
       delete_old_user: ${{ needs.set_env.outputs.auth0_delete_users_before_import }}
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
+    secrets:
       doppler_service_token: ${{ needs.set_env.outputs.doppler_service_token }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
