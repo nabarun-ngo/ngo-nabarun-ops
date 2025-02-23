@@ -124,7 +124,7 @@ jobs:
   import_data:
     name: 'Import Data'
     needs: set_env
-    if: ${{ needs.set_env.outputs.auth0_import_permission == 'true' || needs.set_env.outputs.auth0_import_users == 'true' }}
+    if: ${{ needs.set_env.outputs.auth0_import_permission == true || needs.set_env.outputs.auth0_import_users == true }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
     with:
       branch_name: 'main'
@@ -142,7 +142,7 @@ jobs:
   sync_data_auth0:
     name: 'Sync Data - Auth0'
     needs: set_env
-    if: ${{ needs.set_env.outputs.auth0_sync_tenant == 'true' }}
+    if: ${{ needs.set_env.outputs.auth0_sync_tenant == true }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync.yml@main
     with:
       branch_name: 'main'
