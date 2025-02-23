@@ -90,8 +90,6 @@ jobs:
             echo "auth0_dest_tenant=${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}"
             echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}"
             echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}"
-            echo "input_file=Application_Access_Management.xlsx"
-            echo "doppler_project=nabarun_tools"
 
             if [[ $auth0_dest_tenant == DEV ]]; then
               echo "doppler_service_token=${{ secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}"
