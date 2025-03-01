@@ -149,7 +149,7 @@ jobs:
         run: echo "Is Run-Smoke-Test running? $SMOKE_TEST_RUNNING"
         
       - name: Repository Dispatch
-        if: $SMOKE_TEST_RUNNING == false
+        if:  ${{ env.SMOKE_TEST_RUNNING == false }}
         uses: peter-evans/repository-dispatch@v3
         with:
           repository: nabarun-ngo/ngo-nabarun-devops
