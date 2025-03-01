@@ -1,0 +1,74 @@
+name: '[Trigger] Run Automated Test'
+on:
+  workflow_dispatch:
+    inputs:
+     test_env:
+       required: true
+       description: 'Test Environment'
+       type: choice
+       options:
+         - stage
+         - prod
+     test_type:
+       required: true
+       description: 'Test Type'
+       type: choice
+       options:
+         - Regression
+         - Smoke
+     
+     test_filter_tag:
+       description: 'Test Tags'
+       required: false
+       type: string
+       default: ''
+
+jobs:
+  set_env:
+    runs-on: ubuntu-latest
+    name: 'SetUp Environment'
+    outputs:
+      test_env: ${{ steps.set_vars.outputs.test_env }}
+      test_type: ${{ steps.set_vars.outputs.test_type }}
+      test_filter_tag: ${{ steps.set_vars.outputs.test_filter_tag }}
+      doppler_project: 'nabarun_backend'
+    steps:
+      - name: Set Global Variables
+        id: set_vars
+        run: |
+          # Inputs 
+          echo "test_env=${{ github.event.client_payload.test_env || inputs.test_env }}" >> $GITHUB_OUTPUT
+          echo "test_type=${{ github.event.client_payload.test_type || inputs.test_type }}" >> $GITHUB_OUTPUT
+          echo "test_filter_tag=${{ github.event.client_payload.test_filter_tag || inputs.test_filter_tag }}" >> $GITHUB_OUTPUT
+          
+  run_automated_test:
+    name: Run Automation Test 
+    needs: set_env
+    if: ${{ needs.set_env.outputs.test_env != 'prod' }}
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
+    with:
+        test_env: ${{ needs.set_env.outputs.test_env }}
+        test_type: ${{ needs.set_env.outputs.test_type }}
+        test_cucumber_tags: ${{ needs.set_env.outputs.test_filter_tag != '' && needs.set_env.outputs.test_filter_tag || (needs.set_env.outputs.test_type == 'Smoke' && '@smoke' || '@regression') }}
+        test_doppler_project_name: ${{ needs.set_env.outputs.doppler_project }}
+        upload_result: true 
+    secrets:
+      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
+      qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
+      
+  run_automated_test_prod:
+    name: Run Automation Test (PROD)
+    needs: set_env
+    if: ${{ needs.set_env.outputs.test_env == 'prod' }}
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
+    with:
+        test_env: 'prod'
+        test_doppler_project_name: ${{ needs.set_env.outputs.doppler_project }}
+        upload_result: true 
+        test_cucumber_tags: '@smokeprod'
+        test_type: 'Smoke'
+    secrets:
+      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_PROD }}
+      qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
+      
+   
