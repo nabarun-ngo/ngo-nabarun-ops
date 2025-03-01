@@ -31,7 +31,7 @@ jobs:
       test_env: ${{ steps.set_vars.outputs.test_env }}
       test_type: ${{ steps.set_vars.outputs.test_type }}
       test_filter_tag: ${{ steps.set_vars.outputs.test_filter_tag }}
-      doppler_project: 'nabarun_backend'
+      doppler_project: 'nabarun_test'
     steps:
       - name: Set Global Variables
         id: set_vars
