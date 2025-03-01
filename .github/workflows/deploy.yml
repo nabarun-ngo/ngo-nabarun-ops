@@ -102,10 +102,11 @@ jobs:
       app_doppler_service_token: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.DOPPLER_TOKEN_NABARUN_BACKEND_PROD || secrets.DOPPLER_TOKEN_NABARUN_BACKEND_STAGE }}
  
 
-  auth0_sync:
-      if: ${{ needs.set_env.outputs.auth0_sync == 'true' }}
+  sync_data:
+      # always Running this data sync for prod deployment
+      if: ${{ needs.set_env.outputs.auth0_sync == 'true' || needs.set_env.outputs.target_env == 'prod' }}
       needs: set_env
-      name: Trigger Sync Auth0 Tenants
+      name: Trigger Sync Auth0 & Firebase
       runs-on: ubuntu-latest
       steps:
        - name: Repository Dispatch
@@ -117,6 +118,9 @@ jobs:
               {
                 "auth0_sync_tenant": "true",
                 "auth0_source_tenant": "${{ needs.set_env.outputs.target_env == 'prod' && 'STAGE' || 'DEV' }}",
-                "auth0_dest_tenant": "${{ needs.set_env.outputs.target_env == 'prod' && 'PROD' || 'STAGE' }}"
+                "auth0_dest_tenant": "${{ needs.set_env.outputs.target_env == 'prod' && 'PROD' || 'STAGE' }}",
+                "firebase_sync_rc" : "${{ needs.set_env.outputs.target_env == 'prod' && 'true' || 'false' }}",
+                "firebase_source_env" : "STAGE",
+                "firebase_dest_env" : "PROD"
               }
-  
+
