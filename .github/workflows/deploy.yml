@@ -124,9 +124,10 @@ jobs:
                 "firebase_dest_env" : "PROD"
               }
 
-  run_test:
+  trigger_smoke_test:
+    name: 'Trigger Smoke Test'
     if: ${{ needs.set_env.outputs.run_smoke_test == 'true' }}
-    needs: set_env
+    needs: [set_env,firebase_deploy,gcp_deploy,sync_data]
     runs-on: ubuntu-latest
     steps:
       - name: Install GitHub CLI
@@ -140,16 +141,16 @@ jobs:
         run: |
           running=$(gh run list --repo ${{ github.repository }} --status in_progress --json name --jq '.[] | select(.name=="Run-Smoke-Test") | .name')
            if [[ -n "$running" ]]; then
-            echo "SMOKE_TEST_RUNNING=true" >> $GITHUB_ENV
+            echo "TRIGGER_SMOKE_TEST=false" >> $GITHUB_ENV
           else
-            echo "SMOKE_TEST_RUNNING=false" >> $GITHUB_ENV
+            echo "TRIGGER_SMOKE_TEST=true" >> $GITHUB_ENV
           fi
 
       - name: Print the result
-        run: echo "Is Run-Smoke-Test running? $SMOKE_TEST_RUNNING"
+        run: echo "Trigger Run-Smoke-Test ? $TRIGGER_SMOKE_TEST"
         
       - name: Repository Dispatch
-        if:  ${{ env.SMOKE_TEST_RUNNING == false }}
+        if:  ${{ env.TRIGGER_SMOKE_TEST  }}
         uses: peter-evans/repository-dispatch@v3
         with:
           repository: nabarun-ngo/ngo-nabarun-devops
