@@ -117,7 +117,7 @@ jobs:
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: true
     secrets:
-      doppler_service_token: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'+ needs.set_env.outputs.auth0_target_tenant] }}
+      doppler_service_token: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'${{ needs.set_env.outputs.auth0_target_tenant }}] }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
 
   sync_data_auth0:
@@ -132,6 +132,6 @@ jobs:
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: true
     secrets:
-      doppler_service_token_source: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'+ needs.set_env.outputs.auth0_source_tenant] }}
-      doppler_service_token_dest: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'+ needs.set_env.outputs.auth0_target_tenant] }}
+      doppler_service_token_source: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'${{ needs.set_env.outputs.auth0_source_tenant }}] }}
+      doppler_service_token_dest: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'${{ needs.set_env.outputs.auth0_target_tenant }}] }}
        
