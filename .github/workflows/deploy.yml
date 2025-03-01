@@ -86,7 +86,7 @@ jobs:
       repo_token: ${{ secrets.GITHUB_TOKEN }}
   
   gcp_deploy:
-    if: ${{ needs.set_env.outputs.be_deploy == 'true' }}
+    if: ${{ needs.set_env.outputs.be_deploy == 'true' && always()}}
     needs: set_env
     name: Deploy to GCP App Engine 
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/GCP-Deploy.yml@main
