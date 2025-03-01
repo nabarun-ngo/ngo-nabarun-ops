@@ -92,14 +92,13 @@ jobs:
       - name: Set Global Variables
         id: set_vars
         run: |
-          # Inputs (handling booleans correctly)
-          echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || (inputs.auth0_import_permission == 'true') }}" >> $GITHUB_OUTPUT
-          echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || (inputs.auth0_import_users == 'true') }}" >> $GITHUB_OUTPUT
-          echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || (inputs.auth0_delete_users_before_import == 'true') }}" >> $GITHUB_OUTPUT
-          echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || (inputs.auth0_sync_tenant == 'true') }}" >> $GITHUB_OUTPUT
-          echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || (inputs.firebase_sync_rc == 'true') }}" >> $GITHUB_OUTPUT
+          # Inputs 
+          echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || inputs.auth0_import_permission }}" >> $GITHUB_OUTPUT
+          echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || inputs.auth0_import_users }}" >> $GITHUB_OUTPUT
+          echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || inputs.auth0_delete_users_before_import }}" >> $GITHUB_OUTPUT
+          echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || inputs.auth0_sync_tenant }}" >> $GITHUB_OUTPUT
+          echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || inputs.firebase_sync_rc }}" >> $GITHUB_OUTPUT
           
-          # String Inputs
           auth0_target_tenant="${{ github.event.client_payload.auth0_target_tenant || inputs.auth0_target_tenant }}"
           auth0_source_tenant="${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}"
           auth0_dest_tenant="${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}"
@@ -109,8 +108,7 @@ jobs:
           echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}" >> $GITHUB_OUTPUT
           echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}" >> $GITHUB_OUTPUT
     
-          # Using variables inside shell script correctly
-         
+          # Using variables inside shell script 
           echo "DOPPLER_ST_KEY_A0_IMPORT=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_target_tenant}" >> $GITHUB_OUTPUT
           echo "DOPPLER_ST_SOURCE_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_source_tenant}" >> $GITHUB_OUTPUT
           echo "DOPPLER_ST_DEST_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_dest_tenant}" >> $GITHUB_OUTPUT
@@ -118,16 +116,16 @@ jobs:
   import_data:
     name: 'Import Data'
     needs: set_env
-    if: ${{ needs.set_env.outputs.auth0_import_permission || needs.set_env.outputs.auth0_import_users }}
+    if: ${{ needs.set_env.outputs.auth0_import_permission == 'true' || needs.set_env.outputs.auth0_import_users == 'true' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
     with:
       branch_name: 'main'
       source: 'google_drive'
-      auth0_import_tenant: ${{ needs.set_env.outputs.auth0_target_tenant }}
+      auth0_import_tenant: ${{ needs.set_env.outputs.auth0_target_tenant == 'true' }}
       input_file: ${{ needs.set_env.outputs.input_file }}
-      import_data: ${{ needs.set_env.outputs.auth0_import_permission }}
-      import_user: ${{ needs.set_env.outputs.auth0_import_users }}
-      delete_old_user: ${{ needs.set_env.outputs.auth0_delete_users_before_import }}
+      import_data: ${{ needs.set_env.outputs.auth0_import_permission  == 'true' }}
+      import_user: ${{ needs.set_env.outputs.auth0_import_users == 'true' }}
+      delete_old_user: ${{ needs.set_env.outputs.auth0_delete_users_before_import == 'true' }}
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: true
     secrets:
@@ -137,7 +135,7 @@ jobs:
   sync_data_auth0:
     name: 'Sync Data - Auth0'
     needs: set_env
-    if: ${{ needs.set_env.outputs.auth0_sync_tenant == true }}
+    if: ${{ needs.set_env.outputs.auth0_sync_tenant == 'true' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync.yml@main
     with:
       branch_name: 'main'
