@@ -86,7 +86,7 @@ jobs:
       repo_token: ${{ secrets.GITHUB_TOKEN }}
   
   gcp_deploy:
-    if: ${{ needs.set_env.outputs.be_deploy == 'true' && always()}}
+    if: ${{ needs.set_env.outputs.be_deploy == 'true' }}
     needs: set_env
     name: Deploy to GCP App Engine 
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/GCP-Deploy.yml@main
@@ -126,8 +126,8 @@ jobs:
 
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
-    if: ${{ needs.set_env.outputs.run_smoke_test == 'true' }}
-    needs: [set_env,firebase_deploy,gcp_deploy,sync_data]
+    if: ${{ needs.set_env.outputs.run_smoke_test == 'true' && always() }}
+    needs: [set_env,firebase_deploy,gcp_deploy]
     runs-on: ubuntu-latest
     steps:
       - name: Install GitHub CLI
