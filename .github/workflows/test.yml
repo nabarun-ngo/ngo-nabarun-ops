@@ -1,5 +1,7 @@
 name: '[Trigger] Run Automated Test'
 on:
+  repository_dispatch:
+    types: [Run-Smoke-Test,Run-Test]
   workflow_dispatch:
     inputs:
      test_env:
