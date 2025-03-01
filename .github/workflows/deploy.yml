@@ -138,7 +138,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          running=$(gh run list --repo ${{ github.repository }} --status in_progress --json name --jq '.[] | select(.name=="[Trigger] Run Automated Test") | .name')
+          running=$(gh run list --repo ${{ github.repository }} --status in_progress --json name --jq '.[] | select(.name=="Run-Smoke-Test") | .name')
            if [[ -n "$running" ]]; then
             echo "SMOKE_TEST_RUNNING=true" >> $GITHUB_ENV
           else
@@ -147,3 +147,16 @@ jobs:
 
       - name: Print the result
         run: echo "Is Run-Smoke-Test running? $SMOKE_TEST_RUNNING"
+        
+      - name: Repository Dispatch
+        if: $SMOKE_TEST_RUNNING == false
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          repository: nabarun-ngo/ngo-nabarun-devops
+          event-type: Run-Smoke-Test
+          client-payload: |-
+              {
+                "test_env": "${{ needs.set_env.outputs.target_env }}",
+                "test_type": "Smoke",
+                "test_filter_tag": "${{ needs.set_env.outputs.target_env == 'prod' && '@smokeprod' || '@smoke' }}"
+              }
