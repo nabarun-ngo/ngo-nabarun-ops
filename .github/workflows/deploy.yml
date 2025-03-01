@@ -55,6 +55,9 @@ jobs:
       target_env: ${{ steps.set_vars.outputs.target_env }}
       auth0_sync: ${{ steps.set_vars.outputs.auth0_sync }}
       run_smoke_test: ${{ steps.set_vars.outputs.run_smoke_test }}
+      fb_project_id: ${{ steps.set_vars.outputs.target_env == 'prod' && secrets.FB_PROJECT_ID_PROD || secrets.FB_PROJECT_ID_STAGE }}
+      gcp_project_id: ${{ steps.set_vars.outputs.target_env == 'prod' && secrets.GCP_PROJECT_ID_PROD || secrets.GCP_PROJECT_ID_STAGE }}
+      doppler_be_project: ${{ secrets.DOPPLER_PROJECTNAME_NABARUN_BACKEND }}
     steps:
       - name: Set Global Variables
         id: set_vars
@@ -76,7 +79,7 @@ jobs:
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Deploy.yml@main
     with:
      tag_name: ${{ needs.set_env.outputs.fe_tag_name }}
-     firebase_project_id: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.FB_PROJECT_ID_PROD || secrets.FB_PROJECT_ID_STAGE }}
+     firebase_project_id: ${{ needs.set_env.outputs.fb_project_id }}
      npm_run_command: ${{ needs.set_env.outputs.target_env == 'prod' && 'build' || 'buildstage' }}
     secrets:
       firebase_service_account: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}
@@ -90,9 +93,9 @@ jobs:
     with:
      tag_name: ${{ needs.set_env.outputs.be_tag_name }}
      target_folder: 'ngo-nabarun-app/target'
-     gcp_project_id: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.GCP_PROJECT_ID_PROD || secrets.GCP_PROJECT_ID_STAGE }}
+     gcp_project_id: ${{ needs.set_env.outputs.gcp_project_id }}
      app_env: ${{ needs.set_env.outputs.target_env == 'prod' && 'prod' || 'stage' }}
-     app_doppler_project_name: ${{ secrets.DOPPLER_PROJECTNAME_NABARUN_BACKEND }}
+     app_doppler_project_name: ${{ needs.set_env.outputs.doppler_be_project }} 
      app_log_level: ${{ needs.set_env.outputs.target_env == 'prod' && 'INFO' || 'DEBUG' }}
     secrets:
       gcp_service_account: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
