@@ -92,22 +92,28 @@ jobs:
       - name: Set Global Variables
         id: set_vars
         run: |
-          # Inputs
-          echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || inputs.auth0_import_permission == 'true' }}" >> $GITHUB_OUTPUT
-          echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || inputs.auth0_import_users == 'true' }}" >> $GITHUB_OUTPUT
-          echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || inputs.auth0_delete_users_before_import == 'true'}}" >> $GITHUB_OUTPUT
-          echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || inputs.auth0_sync_tenant == 'true' }}" >> $GITHUB_OUTPUT
-          echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || inputs.firebase_sync_rc == 'true' }}" >> $GITHUB_OUTPUT
-          echo "auth0_target_tenant=${{ github.event.client_payload.auth0_target_tenant || inputs.auth0_target_tenant }}" >> $GITHUB_OUTPUT
-          echo "auth0_source_tenant=${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}" >> $GITHUB_OUTPUT
-          echo "auth0_dest_tenant=${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}" >> $GITHUB_OUTPUT
+          # Inputs (handling booleans correctly)
+          echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || (inputs.auth0_import_permission == 'true') }}" >> $GITHUB_OUTPUT
+          echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || (inputs.auth0_import_users == 'true') }}" >> $GITHUB_OUTPUT
+          echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || (inputs.auth0_delete_users_before_import == 'true') }}" >> $GITHUB_OUTPUT
+          echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || (inputs.auth0_sync_tenant == 'true') }}" >> $GITHUB_OUTPUT
+          echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || (inputs.firebase_sync_rc == 'true') }}" >> $GITHUB_OUTPUT
+          
+          # String Inputs
+          auth0_target_tenant="${{ github.event.client_payload.auth0_target_tenant || inputs.auth0_target_tenant }}"
+          auth0_source_tenant="${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}"
+          auth0_dest_tenant="${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}"
+          echo "auth0_target_tenant=${auth0_target_tenant}" >> $GITHUB_OUTPUT
+          echo "auth0_source_tenant=${auth0_source_tenant}" >> $GITHUB_OUTPUT
+          echo "auth0_dest_tenant=${auth0_dest_tenant}" >> $GITHUB_OUTPUT
           echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}" >> $GITHUB_OUTPUT
           echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}" >> $GITHUB_OUTPUT
-          # Variables
-          echo "DOPPLER_ST_KEY_A0_IMPORT=DOPPLER_TOKEN_NABARUN_TOOLS_${{ auth0_target_tenant }}" >> $GITHUB_OUTPUT
-          echo "DOPPLER_ST_SOURCE_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${{ auth0_source_tenant }}" >> $GITHUB_OUTPUT
-          echo "DOPPLER_ST_DEST_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${{ auth0_dest_tenant }}" >> $GITHUB_OUTPUT
-
+    
+          # Using variables inside shell script correctly
+         
+          echo "DOPPLER_ST_KEY_A0_IMPORT=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_target_tenant}" >> $GITHUB_OUTPUT
+          echo "DOPPLER_ST_SOURCE_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_source_tenant}" >> $GITHUB_OUTPUT
+          echo "DOPPLER_ST_DEST_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_dest_tenant}" >> $GITHUB_OUTPUT
 
   import_data:
     name: 'Import Data'
