@@ -55,9 +55,9 @@ jobs:
       target_env: ${{ steps.set_vars.outputs.target_env }}
       auth0_sync: ${{ steps.set_vars.outputs.auth0_sync }}
       run_smoke_test: ${{ steps.set_vars.outputs.run_smoke_test }}
-      fb_project_id: ${{ steps.set_vars.outputs.target_env == 'prod' && secrets.FB_PROJECT_ID_PROD || secrets.FB_PROJECT_ID_STAGE }}
-      gcp_project_id: ${{ steps.set_vars.outputs.target_env == 'prod' && secrets.GCP_PROJECT_ID_PROD || secrets.GCP_PROJECT_ID_STAGE }}
-      doppler_be_project: ${{ secrets.DOPPLER_PROJECTNAME_NABARUN_BACKEND }}
+      fb_project_id: ${{ steps.set_vars.outputs.target_env == 'prod' && 'wengonabarun' || 'nabarun-test' }}
+      gcp_project_id: ${{ steps.set_vars.outputs.target_env == 'prod' && 'ngonabarun' || 'ngonabarun-stage' }}
+      doppler_be_project: 'nabarun_backend'
     steps:
       - name: Set Global Variables
         id: set_vars
