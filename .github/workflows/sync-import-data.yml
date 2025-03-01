@@ -84,7 +84,7 @@ jobs:
       firebase_source_env: ${{ steps.set_vars.outputs.firebase_source_env }}
       firebase_dest_env: ${{ steps.set_vars.outputs.firebase_dest_env }}
       input_file: Application_Access_Management.xlsx
-      doppler_project: ${{ secrets.DOPPLER_PROJECTNAME_NABARUN_TOOLS }}
+      doppler_project: 'nabarun_tools'
       doppler_st_key_auth0_import: ${{ steps.set_vars.outputs.DOPPLER_ST_KEY_A0_IMPORT }}
       doppler_st_source_key_auth0_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_SOURCE_KEY_A0_SYNC }}
       doppler_st_dest_key_auth0_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_DEST_KEY_A0_SYNC }}
