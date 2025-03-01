@@ -90,36 +90,16 @@ jobs:
       - name: Set Global Variables
         id: set_vars
         run: |
-          {
-            echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || inputs.auth0_import_permission }}"
-            echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || inputs.auth0_import_users }}"
-            echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || inputs.auth0_delete_users_before_import }}"
-            echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || inputs.auth0_sync_tenant }}"
-            echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || inputs.firebase_sync_rc }}"
-            echo "auth0_target_tenant=${{ github.event.client_payload.auth0_target_tenant || inputs.auth0_target_tenant }}"
-            echo "auth0_source_tenant=${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}"
-            echo "auth0_dest_tenant=${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}"
-            echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}"
-            echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}"
-            
-            # auth0 
-            if [[ "$auth0_source_tenant" == "PROD" ]]; then
-              echo "doppler_service_token_source_a0=secrets.DOPPLER_TOKEN_NABARUN_TOOLS_PROD"
-            elif [[ "$auth0_source_tenant" == "STAGE" ]]; then
-              echo "doppler_service_token_source_a0=secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE"
-            else
-              echo "doppler_service_token_source_a0=secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV"
-            fi
-
-            if [[ "$auth0_dest_tenant" == "PROD" ]]; then
-              echo "doppler_service_token_dest_a0=secrets.DOPPLER_TOKEN_NABARUN_TOOLS_PROD"
-            elif [[ "$auth0_dest_tenant" == "STAGE" ]]; then
-              echo "doppler_service_token_dest_a0=secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE"
-            else
-              echo "doppler_service_token_dest_a0=secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV"
-            fi
-            
-          } >> $GITHUB_OUTPUT
+          echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || inputs.auth0_import_permission == 'true' }}" >> $GITHUB_OUTPUT
+          echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || inputs.auth0_import_users == 'true' }}" >> $GITHUB_OUTPUT
+          echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || inputs.auth0_delete_users_before_import == 'true'}}" >> $GITHUB_OUTPUT
+          echo "auth0_sync_tenant=${{ github.event.client_payload.auth0_sync_tenant || inputs.auth0_sync_tenant == 'true' }}" >> $GITHUB_OUTPUT
+          echo "firebase_sync_rc=${{ github.event.client_payload.firebase_sync_rc || inputs.firebase_sync_rc == 'true' }}" >> $GITHUB_OUTPUT
+          echo "auth0_target_tenant=${{ github.event.client_payload.auth0_target_tenant || inputs.auth0_target_tenant }}" >> $GITHUB_OUTPUT
+          echo "auth0_source_tenant=${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}" >> $GITHUB_OUTPUT
+          echo "auth0_dest_tenant=${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}" >> $GITHUB_OUTPUT
+          echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}" >> $GITHUB_OUTPUT
+          echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}" >> $GITHUB_OUTPUT
 
   import_data:
     name: 'Import Data'
@@ -137,7 +117,7 @@ jobs:
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: true
     secrets:
-      doppler_service_token: ${{ needs.set_env.outputs.auth0_target_tenant == 'STAGE' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}
+      doppler_service_token: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'+ needs.set_env.outputs.auth0_target_tenant] }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
 
   sync_data_auth0:
@@ -152,6 +132,6 @@ jobs:
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: true
     secrets:
-      doppler_service_token_source: ${{ needs.set_env.outputs.doppler_service_token_source_a0 }}
-      doppler_service_token_dest: ${{ needs.set_env.outputs.doppler_service_token_dest_a0 }}
+      doppler_service_token_source: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'+ needs.set_env.outputs.auth0_source_tenant] }}
+      doppler_service_token_dest: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'+ needs.set_env.outputs.auth0_target_tenant] }}
        
