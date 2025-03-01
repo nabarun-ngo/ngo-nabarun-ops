@@ -30,7 +30,7 @@ on:
          - stage
          - prod
      auth0_sync:
-       description: 'Sync Auth0'
+       description: 'Sync Environments'
        required: true
        type: boolean
        default: false
