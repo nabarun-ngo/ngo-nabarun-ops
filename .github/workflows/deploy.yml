@@ -138,7 +138,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          running=$(gh run list --repo ${{ github.repository }} --status in_progress --json name --jq '.[] | select(.name=="Run-Smoke-Test") | .name')
+          running=$(gh run list --repo ${{ github.repository }} --status in_progress --json name --jq '.[] | select(.name=="[Trigger] Run Automated Test") | .name')
            if [[ -n "$running" ]]; then
             echo "SMOKE_TEST_RUNNING=true" >> $GITHUB_ENV
           else
