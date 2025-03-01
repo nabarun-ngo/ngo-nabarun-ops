@@ -121,7 +121,7 @@ jobs:
     with:
       branch_name: 'main'
       source: 'google_drive'
-      auth0_import_tenant: ${{ needs.set_env.outputs.auth0_target_tenant == 'true' }}
+      auth0_import_tenant: ${{ needs.set_env.outputs.auth0_target_tenant }}
       input_file: ${{ needs.set_env.outputs.input_file }}
       import_data: ${{ needs.set_env.outputs.auth0_import_permission  == 'true' }}
       import_user: ${{ needs.set_env.outputs.auth0_import_users == 'true' }}
