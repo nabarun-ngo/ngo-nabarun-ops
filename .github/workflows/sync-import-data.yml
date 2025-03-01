@@ -71,6 +71,7 @@ on:
 jobs:
   set_env:
     runs-on: ubuntu-latest
+    name: 'SetUp Environment'
     outputs:
       auth0_import_permission: ${{ steps.set_vars.outputs.auth0_import_permission }}
       auth0_import_users: ${{ steps.set_vars.outputs.auth0_import_users }}
@@ -84,12 +85,14 @@ jobs:
       firebase_dest_env: ${{ steps.set_vars.outputs.firebase_dest_env }}
       input_file: Application_Access_Management.xlsx
       doppler_project: nabarun_tools
-      doppler_service_token_source_a0: ${{ steps.set_vars.outputs.doppler_service_token_source_a0 }}
-      doppler_service_token_dest_a0: ${{ steps.set_vars.outputs.doppler_service_token_dest_a0 }}
+      doppler_st_key_auth0_import: ${{ steps.set_vars.outputs.DOPPLER_ST_KEY_A0_IMPORT }}
+      doppler_st_source_key_auth0_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_SOURCE_KEY_A0_SYNC }}
+      doppler_st_dest_key_auth0_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_DEST_KEY_A0_SYNC }}
     steps:
       - name: Set Global Variables
         id: set_vars
         run: |
+          # Inputs
           echo "auth0_import_permission=${{ github.event.client_payload.auth0_import_permission || inputs.auth0_import_permission == 'true' }}" >> $GITHUB_OUTPUT
           echo "auth0_import_users=${{ github.event.client_payload.auth0_import_users || inputs.auth0_import_users == 'true' }}" >> $GITHUB_OUTPUT
           echo "auth0_delete_users_before_import=${{ github.event.client_payload.auth0_delete_users_before_import || inputs.auth0_delete_users_before_import == 'true'}}" >> $GITHUB_OUTPUT
@@ -100,6 +103,11 @@ jobs:
           echo "auth0_dest_tenant=${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}" >> $GITHUB_OUTPUT
           echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}" >> $GITHUB_OUTPUT
           echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}" >> $GITHUB_OUTPUT
+          # Variables
+          echo "DOPPLER_ST_KEY_A0_IMPORT=DOPPLER_TOKEN_NABARUN_TOOLS_${{ auth0_target_tenant }}" >> $GITHUB_OUTPUT
+          echo "DOPPLER_ST_SOURCE_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${{ auth0_source_tenant }}" >> $GITHUB_OUTPUT
+          echo "DOPPLER_ST_DEST_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${{ auth0_dest_tenant }}" >> $GITHUB_OUTPUT
+
 
   import_data:
     name: 'Import Data'
@@ -117,7 +125,7 @@ jobs:
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: true
     secrets:
-      doppler_service_token: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'${{ needs.set_env.outputs.auth0_target_tenant }}] }}
+      doppler_service_token: ${{ secrets[needs.set_env.outputs.doppler_st_key_auth0_import] }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY_STAGE }}
 
   sync_data_auth0:
@@ -132,6 +140,6 @@ jobs:
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: true
     secrets:
-      doppler_service_token_source: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'${{ needs.set_env.outputs.auth0_source_tenant }}] }}
-      doppler_service_token_dest: ${{ secrets['DOPPLER_TOKEN_NABARUN_TOOLS_'${{ needs.set_env.outputs.auth0_target_tenant }}] }}
+      doppler_service_token_source: ${{ secrets[needs.set_env.outputs.doppler_st_source_key_auth0_sync] }}
+      doppler_service_token_dest: ${{ secrets[needs.set_env.outputs.doppler_st_dest_key_auth0_sync] }}
        
