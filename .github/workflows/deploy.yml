@@ -150,7 +150,7 @@ jobs:
         run: echo "Trigger Run-Smoke-Test ? $TRIGGER_SMOKE_TEST"
         
       - name: Repository Dispatch
-        if:  ${{ env.TRIGGER_SMOKE_TEST  }}
+        if:  env.TRIGGER_SMOKE_TEST == false
         uses: peter-evans/repository-dispatch@v3
         with:
           repository: nabarun-ngo/ngo-nabarun-devops
