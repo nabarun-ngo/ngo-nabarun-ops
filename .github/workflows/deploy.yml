@@ -1,0 +1,119 @@
+name: '[Trigger] Deploy to GCP (GAE), Firebase (Hosting), Sync Env (Auth0,Remote Config), SmokeTest'
+on:
+  repository_dispatch:
+    types: [Deploy]
+  workflow_dispatch:
+    inputs:
+     fe_deploy:
+       description: 'Deploy Frontend (Angular)'
+       required: true
+       type: boolean
+       default: false
+     fe_tag_name:
+       required: true
+       description: 'Tag to deploy (Frontend)'
+       type: string
+     be_deploy:
+       description: 'Deploy Backend (Spring Boot)'
+       required: true
+       type: boolean
+       default: false
+     be_tag_name:
+       required: true
+       description: 'Tag to deploy (Backend)'
+       type: string
+     target_env:
+       required: true
+       description: 'Target Environment'
+       type: choice
+       options:
+         - stage
+         - prod
+     auth0_sync:
+       description: 'Sync Auth0'
+       required: true
+       type: boolean
+       default: false
+     run_smoke_test:
+       description: 'Run Smoke Test'
+       required: true
+       type: boolean
+       default: false
+
+permissions:
+  contents: write      
+
+jobs:
+  set_env:
+    runs-on: ubuntu-latest
+    name: 'SetUp Environment'
+    outputs:
+      fe_deploy: ${{ steps.set_vars.outputs.fe_deploy }}
+      fe_tag_name: ${{ steps.set_vars.outputs.fe_tag_name }}
+      be_deploy: ${{ steps.set_vars.outputs.be_deploy }}
+      be_tag_name: ${{ steps.set_vars.outputs.be_tag_name }}
+      target_env: ${{ steps.set_vars.outputs.target_env }}
+      auth0_sync: ${{ steps.set_vars.outputs.auth0_sync }}
+      run_smoke_test: ${{ steps.set_vars.outputs.run_smoke_test }}
+    steps:
+      - name: Set Global Variables
+        id: set_vars
+        run: |
+          # Inputs 
+          echo "fe_deploy=${{ github.event.client_payload.fe_deploy || inputs.fe_deploy }}" >> $GITHUB_OUTPUT
+          echo "fe_tag_name=${{ github.event.client_payload.fe_tag_name || inputs.fe_tag_name }}" >> $GITHUB_OUTPUT
+          echo "be_deploy=${{ github.event.client_payload.be_deploy || inputs.be_deploy }}" >> $GITHUB_OUTPUT
+          echo "be_tag_name=${{ github.event.client_payload.be_tag_name || inputs.be_tag_name }}" >> $GITHUB_OUTPUT
+          target_env=${{ github.event.client_payload.target_env || inputs.target_env }}
+          echo "target_env=${target_env}" >> $GITHUB_OUTPUT
+          echo "auth0_sync=${{ github.event.client_payload.auth0_sync || inputs.auth0_sync }}" >> $GITHUB_OUTPUT
+          echo "run_smoke_test=${{ github.event.client_payload.run_smoke_test || inputs.run_smoke_test }}" >> $GITHUB_OUTPUT
+          
+  firebase_deploy:
+    if: ${{ needs.set_env.outputs.fe_deploy == 'true' }}
+    needs: set_env
+    name: Deploy to Firebase
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Deploy.yml@main
+    with:
+     tag_name: ${{ needs.set_env.outputs.fe_tag_name }}
+     firebase_project_id: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.FB_PROJECT_ID_PROD || secrets.FB_PROJECT_ID_STAGE }}
+     npm_run_command: ${{ needs.set_env.outputs.target_env == 'prod' && 'build' || 'buildstage' }}
+    secrets:
+      firebase_service_account: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}
+      repo_token: ${{ secrets.GITHUB_TOKEN }}
+  
+  gcp_deploy:
+    if: ${{ needs.set_env.outputs.be_deploy == 'true' }}
+    needs: set_env
+    name: Deploy to GCP App Engine 
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/GCP-Deploy.yml@main
+    with:
+     tag_name: ${{ needs.set_env.outputs.be_tag_name }}
+     target_folder: 'ngo-nabarun-app/target'
+     gcp_project_id: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.GCP_PROJECT_ID_PROD || secrets.GCP_PROJECT_ID_STAGE }}
+     app_env: ${{ needs.set_env.outputs.target_env == 'prod' && 'prod' || 'stage' }}
+     app_doppler_project_name: ${{ secrets.DOPPLER_PROJECTNAME_NABARUN_BACKEND }}
+     app_log_level: ${{ needs.set_env.outputs.target_env == 'prod' && 'INFO' || 'DEBUG' }}
+    secrets:
+      gcp_service_account: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
+      app_doppler_service_token: ${{ needs.set_env.outputs.target_env == 'prod' && secrets.DOPPLER_TOKEN_NABARUN_BACKEND_PROD || secrets.DOPPLER_TOKEN_NABARUN_BACKEND_STAGE }}
+ 
+
+  auth0_sync:
+      if: ${{ needs.set_env.outputs.auth0_sync == 'true' }}
+      needs: set_env
+      name: Trigger Sync Auth0 Tenants
+      runs-on: ubuntu-latest
+      steps:
+       - name: Repository Dispatch
+         uses: peter-evans/repository-dispatch@v3
+         with:
+          repository: nabarun-ngo/ngo-nabarun-devops
+          event-type: Import-Sync-Data
+          client-payload: |-
+              {
+                "auth0_sync_tenant": "true",
+                "auth0_source_tenant": "${{ needs.set_env.outputs.target_env == 'prod' && 'STAGE' || 'DEV' }}",
+                "auth0_dest_tenant": "${{ needs.set_env.outputs.target_env == 'prod' && 'PROD' || 'STAGE' }}"
+              }
+  
