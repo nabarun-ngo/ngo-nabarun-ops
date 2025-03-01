@@ -124,3 +124,25 @@ jobs:
                 "firebase_dest_env" : "PROD"
               }
 
+  run_test:
+    if: ${{ needs.set_env.outputs.run_smoke_test == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GitHub CLI
+        run: |
+          sudo apt update
+          sudo apt install -y gh
+
+      - name: Check if 'Run-Smoke-Test' workflow is already running
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          running=$(gh run list --repo ${{ github.repository }} --status in_progress --json name --jq '.[] | select(.name=="Run-Smoke-Test") | .name')
+           if [[ -n "$running" ]]; then
+            echo "SMOKE_TEST_RUNNING=true" >> $GITHUB_ENV
+          else
+            echo "SMOKE_TEST_RUNNING=false" >> $GITHUB_ENV
+          fi
+
+      - name: Print the result
+        run: echo "Is Run-Smoke-Test running? $SMOKE_TEST_RUNNING"
