@@ -126,6 +126,7 @@ jobs:
 
   run_test:
     if: ${{ needs.set_env.outputs.run_smoke_test == 'true' }}
+    needs: set_env
     runs-on: ubuntu-latest
     steps:
       - name: Install GitHub CLI
