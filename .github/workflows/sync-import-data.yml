@@ -88,6 +88,9 @@ jobs:
       doppler_st_key_auth0_import: ${{ steps.set_vars.outputs.DOPPLER_ST_KEY_A0_IMPORT }}
       doppler_st_source_key_auth0_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_SOURCE_KEY_A0_SYNC }}
       doppler_st_dest_key_auth0_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_DEST_KEY_A0_SYNC }}
+      doppler_st_source_key_firebase_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_SOURCE_KEY_FB_SYNC }}
+      doppler_st_dest_key_firebase_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_DEST_KEY_FB_SYNC }}
+
     steps:
       - name: Set Global Variables
         id: set_vars
@@ -102,17 +105,21 @@ jobs:
           auth0_target_tenant="${{ github.event.client_payload.auth0_target_tenant || inputs.auth0_target_tenant }}"
           auth0_source_tenant="${{ github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant }}"
           auth0_dest_tenant="${{ github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant }}"
+          firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}
+          firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}
+          
           echo "auth0_target_tenant=${auth0_target_tenant}" >> $GITHUB_OUTPUT
           echo "auth0_source_tenant=${auth0_source_tenant}" >> $GITHUB_OUTPUT
           echo "auth0_dest_tenant=${auth0_dest_tenant}" >> $GITHUB_OUTPUT
-          echo "firebase_source_env=${{ github.event.client_payload.firebase_source_env || inputs.firebase_source_env }}" >> $GITHUB_OUTPUT
-          echo "firebase_dest_env=${{ github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env }}" >> $GITHUB_OUTPUT
+          echo "firebase_source_env=${firebase_source_env}" >> $GITHUB_OUTPUT
+          echo "firebase_dest_env=${firebase_dest_env}" >> $GITHUB_OUTPUT
     
           # Using variables inside shell script 
           echo "DOPPLER_ST_KEY_A0_IMPORT=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_target_tenant}" >> $GITHUB_OUTPUT
           echo "DOPPLER_ST_SOURCE_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_source_tenant}" >> $GITHUB_OUTPUT
           echo "DOPPLER_ST_DEST_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_dest_tenant}" >> $GITHUB_OUTPUT
-
+          echo "DOPPLER_ST_SOURCE_KEY_FB_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${firebase_source_env}" >> $GITHUB_OUTPUT
+          echo "DOPPLER_ST_DEST_KEY_FB_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${firebase_dest_env}" >> $GITHUB_OUTPUT
   import_data:
     name: 'Import Data'
     needs: set_env
@@ -146,4 +153,19 @@ jobs:
     secrets:
       doppler_service_token_source: ${{ secrets[needs.set_env.outputs.doppler_st_source_key_auth0_sync] }}
       doppler_service_token_dest: ${{ secrets[needs.set_env.outputs.doppler_st_dest_key_auth0_sync] }}
+       
+  sync_data_firebase:
+    name: 'Sync Data - Firebase'
+    needs: set_env
+    if: ${{ needs.set_env.outputs.firebase_sync_rc == 'true' }}
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Sync.yml@main
+    with:
+      branch_name: 'main'
+      firebase_source_env: ${{ needs.set_env.outputs.firebase_source_env }}
+      firebase_dest_env: ${{ needs.set_env.outputs.firebase_dest_env }}
+      doppler_project: ${{ needs.set_env.outputs.doppler_project }}
+      dry_run: false
+    secrets:
+      doppler_service_token_source: ${{ secrets[needs.set_env.outputs.doppler_st_source_key_firebase_sync] }}
+      doppler_service_token_dest: ${{ secrets[needs.set_env.outputs.doppler_st_dest_key_firebase_sync] }}
        
