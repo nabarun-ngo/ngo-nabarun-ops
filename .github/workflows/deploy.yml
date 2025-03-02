@@ -38,10 +38,7 @@ on:
        description: 'Run Smoke Test'
        required: true
        type: boolean
-       default: true
-
-permissions:
-  contents: write      
+       default: true    
 
 jobs:
   set_env:
