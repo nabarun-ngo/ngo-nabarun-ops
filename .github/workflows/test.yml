@@ -1,7 +1,7 @@
-name: '[Trigger] Run Automated Test'
+name: '[Manual] Run Automated Test'
 on:
   repository_dispatch:
-    types: [Run-Smoke-Test,Run-Test]
+    types: [Trigger-Smoke-Test,Trigger-Test]
   workflow_dispatch:
     inputs:
      test_env:
