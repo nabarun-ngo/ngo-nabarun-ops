@@ -49,6 +49,7 @@ jobs:
     if: ${{ needs.set_env.outputs.test_env != 'prod' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
     with:
+        branch_name: ${{ needs.set_env.outputs.test_env == 'prod' && 'master' || 'stage' }}
         test_env: ${{ needs.set_env.outputs.test_env }}
         test_type: ${{ needs.set_env.outputs.test_type }}
         test_cucumber_tags: ${{ needs.set_env.outputs.test_filter_tag != '' && needs.set_env.outputs.test_filter_tag || (needs.set_env.outputs.test_type == 'Smoke' && '@smoke' || '@regression') }}
