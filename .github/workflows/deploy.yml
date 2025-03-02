@@ -1,7 +1,7 @@
-name: '[Trigger] Deploy to GCP (GAE), Firebase (Hosting), Sync Env (Auth0,Remote Config), SmokeTest'
+name: '[Manual] Deploy to GCP (GAE), Firebase (Hosting), Sync Env (Auth0,Remote Config), SmokeTest'
 on:
   repository_dispatch:
-    types: [Deploy]
+    types: [Trigger-Deploy-Sync-Test]
   workflow_dispatch:
     inputs:
      fe_deploy:
@@ -113,7 +113,7 @@ jobs:
          uses: peter-evans/repository-dispatch@v3
          with:
           repository: nabarun-ngo/ngo-nabarun-devops
-          event-type: Import-Sync-Data
+          event-type: Trigger-Import-Sync-Data
           client-payload: |-
               {
                 "auth0_sync_tenant": "true",
@@ -154,7 +154,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           repository: nabarun-ngo/ngo-nabarun-devops
-          event-type: Run-Smoke-Test
+          event-type: Trigger-Smoke-Test
           client-payload: |-
               {
                 "test_env": "${{ needs.set_env.outputs.target_env }}",
