@@ -73,5 +73,6 @@ jobs:
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_PROD }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
+      qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
       
    
