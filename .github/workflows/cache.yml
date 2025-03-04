@@ -1,0 +1,14 @@
+name: [Manual] Clear Redis Cache
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  clear-redis-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Redis CLI
+        run: sudo apt-get update && sudo apt-get install -y redis-tools
+
+      - name: Clear Redis Cache
+        run: redis-cli -h ${{ secrets.REDIS_HOST }} -p ${{ secrets.REDIS_PORT }} -a ${{ secrets.REDIS_PASSWORD }} FLUSHALL
