@@ -1,13 +1,43 @@
-name: '[Manual] Clear Redis Cache'
+name: Redis Cache Management
+
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose action: 'view' to list keys, 'delete' to clear cache"
+        required: true
+        default: "view"
+        type: choice
+        options:
+          - view
+          - delete
+      key:
+        description: "Specify a Redis key to delete (leave empty to delete all)"
+        required: false
+        default: ""
 
 jobs:
-  clear-redis-cache:
+  view-redis-keys:
+    if: ${{ github.event.inputs.action == 'view' }}
     runs-on: ubuntu-latest
     steps:
       - name: Install Redis CLI
         run: sudo apt-get update && sudo apt-get install -y redis-tools
 
-      - name: Clear Redis Cache
+      - name: List Redis Keys
+        run: redis-cli -h ${{ secrets.REDIS_HOST }} -p ${{ secrets.REDIS_PORT }} -a ${{ secrets.REDIS_PASSWORD }} KEYS "*"
+
+  delete-redis-key:
+    if: ${{ github.event.inputs.action == 'delete' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Redis CLI
+        run: sudo apt-get update && sudo apt-get install -y redis-tools
+
+      - name: Delete Specific Redis Key
+        if: ${{ github.event.inputs.key != '' }}
+        run: redis-cli -h ${{ secrets.REDIS_HOST }} -p ${{ secrets.REDIS_PORT }} -a ${{ secrets.REDIS_PASSWORD }} DEL "${{ github.event.inputs.key }}"
+
+      - name: Clear Redis Cache (All Keys)
+        if: ${{ github.event.inputs.key == '' }}
         run: redis-cli -h ${{ secrets.REDIS_HOST }} -p ${{ secrets.REDIS_PORT }} -a ${{ secrets.REDIS_PASSWORD }} FLUSHALL
