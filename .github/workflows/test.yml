@@ -58,7 +58,8 @@ jobs:
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
-      
+      qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
+
   run_automated_test_prod:
     name: Run Automation Test (PROD)
     needs: set_env
