@@ -1,5 +1,4 @@
-name: [Manual] Clear Redis Cache
-
+name: '[Manual] Clear Redis Cache'
 on:
   workflow_dispatch: 
 
