@@ -52,7 +52,7 @@ jobs:
       
       - name: Extract textPayload
         run: |
-          cat gcp_logs.json | jq -r '.textPayload' > textPayload.txt
+          cat gcp_logs.json | jq -r 'reverse | .[] | .textPayload' input.json > textPayload.txt
           cat textPayload.txt  # To verify output
 
       - name: Upload text file as artifact
