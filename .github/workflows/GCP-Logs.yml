@@ -30,32 +30,33 @@ jobs:
 
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
-  
-      # - name: 'Use gcloud CLI'
-      #   run: 'gcloud info'
 
       - name: Download logs with user-provided UUID
         run: |
           gcloud logging read \
             "textPayload:\"${{ github.event.inputs.uuid }}\"" \
-            --format=json > gcp_logs.json
-
-      # - name: Extract textPayload and save to text file
-      #   run: |
-      #     cat gcp_logs.json | jq -r '.[].textPayload' > extracted_logs.txt
-
-      - name: Upload logs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: extracted-gcp-logs
-          path: gcp_logs.json
+            --format=json > gcp_json_logs-${{ github.event.inputs.uuid }}.json
       
-      - name: Extract textPayload
+      - name: Extract Data
         run: |
-          jq -r 'reverse | .[] | .textPayload' gcp_logs.json > textPayload.txt
+          jq -r 'reverse | .[] | .textPayload' gcp_json_logs-${{ github.event.inputs.uuid }}.json > gcp_text_logs-${{ github.event.inputs.uuid }}.txt
+          jq -r 'reverse | .[] | [.textPayload] | @csv' gcp_json_logs-${{ github.event.inputs.uuid }}.json > gcp_csv_logs-${{ github.event.inputs.uuid }}.csv
 
-      - name: Upload text file as artifact
+      - name: Upload json logs as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: textPayload
-          path: textPayload.txt
+          name: gcp_json_logs-${{ github.event.inputs.uuid }}
+          path: gcp_json_logs-${{ github.event.inputs.uuid }}.json 
+      
+      - name: Upload text logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcp_text_logs-${{ github.event.inputs.uuid }}
+          path: gcp_text_logs-${{ github.event.inputs.uuid }}.txt
+          
+      - name: Upload csv logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gcp_csv_logs-${{ github.event.inputs.uuid }}
+          path: gcp_csv_logs-${{ github.event.inputs.uuid }}.csv
+
