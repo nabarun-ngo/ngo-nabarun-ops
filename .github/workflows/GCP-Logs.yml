@@ -1,0 +1,50 @@
+name: Download and Extract GCP Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      uuid:
+        description: 'UUID to filter logs (textPayload)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment (stage or prod)'
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
+
+jobs:
+  download-logs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ github.event.inputs.environment == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
+
+      - name: Install gcloud CLI & jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-sdk jq
+
+      - name: Download logs with user-provided UUID
+        run: |
+          gcloud logging read \
+            "resource.type=\"gce_instance\" AND textPayload:\"${{ github.event.inputs.uuid }}\"" \
+            --format=json > gcp_logs.json
+
+      - name: Extract textPayload and save to text file
+        run: |
+          cat gcp_logs.json | jq -r '.[].textPayload' > extracted_logs.txt
+
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extracted-gcp-logs
+          path: extracted_logs.txt
