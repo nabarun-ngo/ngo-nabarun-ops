@@ -49,3 +49,14 @@ jobs:
         with:
           name: extracted-gcp-logs
           path: gcp_logs.json
+      
+      - name: Extract textPayload
+        run: |
+          cat gcp_logs.json | jq -r '.textPayload' > textPayload.txt
+          cat textPayload.txt  # To verify output
+
+      - name: Upload text file as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: textPayload
+          path: textPayload.txt
