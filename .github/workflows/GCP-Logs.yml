@@ -37,15 +37,15 @@ jobs:
       - name: Download logs with user-provided UUID
         run: |
           gcloud logging read \
-            "resource.type=\"gce_instance\" AND textPayload:\"${{ github.event.inputs.uuid }}\"" \
+            "textPayload:\"${{ github.event.inputs.uuid }}\"" \
             --format=json > gcp_logs.json
 
-      - name: Extract textPayload and save to text file
-        run: |
-          cat gcp_logs.json | jq -r '.[].textPayload' > extracted_logs.txt
+      # - name: Extract textPayload and save to text file
+      #   run: |
+      #     cat gcp_logs.json | jq -r '.[].textPayload' > extracted_logs.txt
 
       - name: Upload logs as artifact
         uses: actions/upload-artifact@v4
         with:
           name: extracted-gcp-logs
-          path: extracted_logs.txt
+          path: gcp_logs.json
