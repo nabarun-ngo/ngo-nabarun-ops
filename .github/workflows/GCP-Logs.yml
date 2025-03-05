@@ -28,15 +28,11 @@ jobs:
         with:
           credentials_json: ${{ github.event.inputs.environment == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
 
-      - name: Install gcloud CLI & jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-          echo "Installing Google Cloud SDK..."
-          export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
-          echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-          sudo apt-get update && sudo apt-get install -y google-cloud-sdk
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+  
+      - name: 'Use gcloud CLI'
+        run: 'gcloud info'
 
       - name: Download logs with user-provided UUID
         run: |
