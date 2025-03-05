@@ -31,8 +31,8 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
   
-      - name: 'Use gcloud CLI'
-        run: 'gcloud info'
+      # - name: 'Use gcloud CLI'
+      #   run: 'gcloud info'
 
       - name: Download logs with user-provided UUID
         run: |
@@ -52,8 +52,7 @@ jobs:
       
       - name: Extract textPayload
         run: |
-          cat gcp_logs.json | jq -r 'reverse | .[] | .textPayload' input.json > textPayload.txt
-          cat textPayload.txt  # To verify output
+          jq -r 'reverse | .[] | .textPayload' gcp_logs.json > textPayload.txt
 
       - name: Upload text file as artifact
         uses: actions/upload-artifact@v4
