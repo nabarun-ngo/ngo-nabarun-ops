@@ -90,7 +90,8 @@ jobs:
       doppler_st_dest_key_auth0_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_DEST_KEY_A0_SYNC }}
       doppler_st_source_key_firebase_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_SOURCE_KEY_FB_SYNC }}
       doppler_st_dest_key_firebase_sync: ${{ steps.set_vars.outputs.DOPPLER_ST_DEST_KEY_FB_SYNC }}
-
+      auth0_source_config_key_sync: ${{ steps.set_vars.outputs.AUTH0_CONFIG_S }}
+      auth0_dest_config_key_sync: ${{ steps.set_vars.outputs.AUTH0_CONFIG_D }}
     steps:
       - name: Set Global Variables
         id: set_vars
@@ -120,6 +121,10 @@ jobs:
           echo "DOPPLER_ST_DEST_KEY_A0_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${auth0_dest_tenant}" >> $GITHUB_OUTPUT
           echo "DOPPLER_ST_SOURCE_KEY_FB_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${firebase_source_env}" >> $GITHUB_OUTPUT
           echo "DOPPLER_ST_DEST_KEY_FB_SYNC=DOPPLER_TOKEN_NABARUN_TOOLS_${firebase_dest_env}" >> $GITHUB_OUTPUT
+          
+          echo "AUTH0_CONFIG_S=AUTH0_CONFIG_${auth0_source_tenant}" >> $GITHUB_OUTPUT
+          echo "AUTH0_CONFIG_D=AUTH0_CONFIG_${auth0_dest_tenant}" >> $GITHUB_OUTPUT
+  
   import_data:
     name: 'Import Data'
     needs: set_env
@@ -143,16 +148,19 @@ jobs:
     name: 'Sync Data - Auth0'
     needs: set_env
     if: ${{ needs.set_env.outputs.auth0_sync_tenant == 'true' }}
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync-v2.yml@main
     with:
       branch_name: 'main'
-      auth0_source_tenant: ${{ needs.set_env.outputs.auth0_source_tenant }}
-      auth0_dest_tenant: ${{ needs.set_env.outputs.auth0_dest_tenant }}
-      doppler_project: ${{ needs.set_env.outputs.doppler_project }}
+      #auth0_source_tenant: ${{ needs.set_env.outputs.auth0_source_tenant }}
+      #auth0_dest_tenant: ${{ needs.set_env.outputs.auth0_dest_tenant }}
+      #doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: false
     secrets:
-      doppler_service_token_source: ${{ secrets[needs.set_env.outputs.doppler_st_source_key_auth0_sync] }}
-      doppler_service_token_dest: ${{ secrets[needs.set_env.outputs.doppler_st_dest_key_auth0_sync] }}
+      #doppler_service_token_source: ${{ secrets[needs.set_env.outputs.doppler_st_source_key_auth0_sync] }}
+      #doppler_service_token_dest: ${{ secrets[needs.set_env.outputs.doppler_st_dest_key_auth0_sync] }}
+      source_config : ${{ secrets[needs.set_env.outputs.auth0_source_config_key_sync] }}
+      dest_config : ${{ secrets[needs.set_env.outputs.auth0_dest_config_key_sync] }}
+
        
   sync_data_firebase:
     name: 'Sync Data - Firebase'
