@@ -140,9 +140,12 @@ jobs:
       delete_old_user: ${{ needs.set_env.outputs.auth0_delete_users_before_import == 'true' }}
       doppler_project: ${{ needs.set_env.outputs.doppler_project }}
       dry_run: false
+      app_base_url : 'https://ngonabarun-stage.appspot.com'
     secrets:
       doppler_service_token: ${{ secrets[needs.set_env.outputs.doppler_st_key_auth0_import] }}
       gcp_service_account: ${{ secrets.FB_SA_KEY_STAGE }}
+      app_token : ${{ secrets.APP_APIKEY }}
+
 
   sync_data_auth0:
     name: 'Sync Data - Auth0'
