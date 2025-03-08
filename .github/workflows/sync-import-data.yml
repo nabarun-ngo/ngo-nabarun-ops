@@ -157,7 +157,7 @@ jobs:
       #auth0_source_tenant: ${{ needs.set_env.outputs.auth0_source_tenant }}
       #auth0_dest_tenant: ${{ needs.set_env.outputs.auth0_dest_tenant }}
       #doppler_project: ${{ needs.set_env.outputs.doppler_project }}
-      dry_run: false
+      #dry_run: false
     secrets:
       #doppler_service_token_source: ${{ secrets[needs.set_env.outputs.doppler_st_source_key_auth0_sync] }}
       #doppler_service_token_dest: ${{ secrets[needs.set_env.outputs.doppler_st_dest_key_auth0_sync] }}
