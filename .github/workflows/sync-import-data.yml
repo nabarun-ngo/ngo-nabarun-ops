@@ -111,7 +111,7 @@ jobs:
   sync_data_firebase:
     name: 'Sync Data - Firebase'
     needs: set_env
-    if: ${{ needs.set_env.outputs.firebase_sync_rc }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).firebase_sync_rc }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Sync-v2.yml@main
     with:
       firebase_source_project: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env == 'PROD' && 'wengonabarun' ||  'nabarun-test' }}
