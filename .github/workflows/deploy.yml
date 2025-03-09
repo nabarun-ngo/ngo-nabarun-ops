@@ -92,10 +92,10 @@ jobs:
           event-type: Trigger-Import-Sync-Data
           client-payload: |-
               {
-                "auth0_sync_tenant": "true",
+                "auth0_sync_tenant": true,
                 "auth0_source_tenant": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'STAGE' || 'DEV' }}",
                 "auth0_dest_tenant": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'PROD' || 'STAGE' }}",
-                "firebase_sync_rc" : "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'true' || 'false' }}",
+                "firebase_sync_rc" : ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'true' || 'false' }},
                 "firebase_source_env" : "STAGE",
                 "firebase_dest_env" : "PROD"
               }
