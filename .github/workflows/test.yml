@@ -27,33 +27,36 @@ on:
 
 jobs:
   set_env:
-    runs-on: ubuntu-latest
     name: 'SetUp Environment'
-    outputs:
-      test_env: ${{ steps.set_vars.outputs.test_env }}
-      test_type: ${{ steps.set_vars.outputs.test_type }}
-      test_filter_tag: ${{ steps.set_vars.outputs.test_filter_tag }}
-      doppler_project: 'nabarun_test'
-    steps:
-      - name: Set Global Variables
-        id: set_vars
-        run: |
-          # Inputs 
-          echo "test_env=${{ github.event.client_payload.test_env || inputs.test_env }}" >> $GITHUB_OUTPUT
-          echo "test_type=${{ github.event.client_payload.test_type || inputs.test_type }}" >> $GITHUB_OUTPUT
-          echo "test_filter_tag=${{ github.event.client_payload.test_filter_tag || inputs.test_filter_tag }}" >> $GITHUB_OUTPUT
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Set-Inputs.yml@main
+    with:
+      inputs: ${{ toJson(inputs) }}
+      client_payload: ${{ toJson(github.event.client_payload) }}
+    # outputs:
+    #   test_env: ${{ steps.set_vars.outputs.test_env }}
+    #   test_type: ${{ steps.set_vars.outputs.test_type }}
+    #   test_filter_tag: ${{ steps.set_vars.outputs.test_filter_tag }}
+    #   doppler_project: ''
+    # steps:
+    #   - name: Set Global Variables
+    #     id: set_vars
+    #     run: |
+    #       # Inputs 
+    #       echo "test_env=${{ github.event.client_payload.test_env || inputs.test_env }}" >> $GITHUB_OUTPUT
+    #       echo "test_type=${{ github.event.client_payload.test_type || inputs.test_type }}" >> $GITHUB_OUTPUT
+    #       echo "test_filter_tag=${{ github.event.client_payload.test_filter_tag || inputs.test_filter_tag }}" >> $GITHUB_OUTPUT
           
   run_automated_test:
     name: Run Automation Test 
     needs: set_env
-    if: ${{ needs.set_env.outputs.test_env != 'prod' }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).test_env != 'prod' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
     with:
-        branch_name: ${{ needs.set_env.outputs.test_env == 'prod' && 'master' || 'stage' }}
-        test_env: ${{ needs.set_env.outputs.test_env }}
-        test_type: ${{ needs.set_env.outputs.test_type }}
-        test_cucumber_tags: ${{ needs.set_env.outputs.test_filter_tag != '' && needs.set_env.outputs.test_filter_tag || (needs.set_env.outputs.test_type == 'Smoke' && '@smoke' || '@regression') }}
-        test_doppler_project_name: ${{ needs.set_env.outputs.doppler_project }}
+        branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
+        test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
+        test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
+        test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag != '' && fromJson(needs.set_env.outputs.variables).test_filter_tag || (fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' && '@smoke' || '@regression') }}
+        test_doppler_project_name: 'nabarun_test'
         upload_result: true 
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
@@ -63,11 +66,11 @@ jobs:
   run_automated_test_prod:
     name: Run Automation Test (PROD)
     needs: set_env
-    if: ${{ needs.set_env.outputs.test_env == 'prod' }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
     with:
         test_env: 'prod'
-        test_doppler_project_name: ${{ needs.set_env.outputs.doppler_project }}
+        test_doppler_project_name: ${{ fromJson(needs.set_env.outputs.variables).doppler_project }}
         upload_result: true 
         test_cucumber_tags: '@smokeprod'
         test_type: 'Smoke'
