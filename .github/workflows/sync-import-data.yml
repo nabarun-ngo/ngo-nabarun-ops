@@ -75,17 +75,10 @@ jobs:
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
-
-  set_variables:
-    name: 'Prepare Variables'
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Concatinate.yml@main
-    with:
-     environment: ${{ inputs.environment }}
-     mapping: '{"key1":"CONFIGA_","key2":"Configb_"}'
   
   import_data:
     name: 'Import Data'
-    needs: [set_env,set_variables]
+    needs: [set_env]
     if: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_permission == 'true' || fromJson(needs.set_env.outputs.variables).auth0_import_users == 'true' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
     with:
@@ -100,7 +93,7 @@ jobs:
       dry_run: false
       app_base_url : 'https://ngonabarun-stage.appspot.com'
     secrets:
-      doppler_service_token: ${{ secrets[fromJson(needs.set_env.outputs.result).doppler_st_key_auth0_import] }}
+      doppler_service_token: ${{ fromJson(needs.set_env.outputs.variables).auth0_target_tenant == 'STAGE' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}
       gcp_service_account: ${{ secrets.FB_SA_KEY_STAGE }}
       app_token : ${{ secrets.APP_APIKEY }}
 
@@ -108,19 +101,11 @@ jobs:
   sync_data_auth0:
     name: 'Sync Data - Auth0'
     needs: set_env
-    if: ${{ needs.set_env.outputs.auth0_sync_tenant == 'true' }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant == 'true' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync-v2.yml@main
-    with:
-      branch_name: 'main'
-      #auth0_source_tenant: ${{ needs.set_env.outputs.auth0_source_tenant }}
-      #auth0_dest_tenant: ${{ needs.set_env.outputs.auth0_dest_tenant }}
-      #doppler_project: ${{ needs.set_env.outputs.doppler_project }}
-      #dry_run: false
     secrets:
-      #doppler_service_token_source: ${{ secrets[needs.set_env.outputs.doppler_st_source_key_auth0_sync] }}
-      #doppler_service_token_dest: ${{ secrets[needs.set_env.outputs.doppler_st_dest_key_auth0_sync] }}
-      source_config : ${{ secrets[needs.set_env.outputs.auth0_source_config_key_sync] }}
-      dest_config : ${{ secrets[needs.set_env.outputs.auth0_dest_config_key_sync] }}
+      source_config : ${{ (fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD) || (fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE) || secrets.AUTH0_CONFIG_DEV }}
+      dest_config : ${{ (fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD) || (fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE) || secrets.AUTH0_CONFIG_DEV }}
 
        
   sync_data_firebase:
