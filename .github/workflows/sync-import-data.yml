@@ -114,8 +114,8 @@ jobs:
     if: ${{ needs.set_env.outputs.firebase_sync_rc }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Sync-v2.yml@main
     with:
-      firebase_source_env: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env }}
-      firebase_dest_env: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env }}
+      firebase_source_project: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env == 'PROD' && 'wengonabarun' ||  'nabarun-test' }}
+      firebase_target_project: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env == 'PROD' && 'wengonabarun' ||  'nabarun-test' }}
     secrets:
       firebase_service_account_source: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env == 'PROD' && secrets.FB_SA_KEY_PROD ||  secrets.FB_SA_KEY_STAGE }}
       firebase_service_account_target: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env == 'PROD' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}
