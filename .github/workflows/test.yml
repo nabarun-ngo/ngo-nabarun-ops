@@ -32,20 +32,7 @@ jobs:
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
-    # outputs:
-    #   test_env: ${{ steps.set_vars.outputs.test_env }}
-    #   test_type: ${{ steps.set_vars.outputs.test_type }}
-    #   test_filter_tag: ${{ steps.set_vars.outputs.test_filter_tag }}
-    #   doppler_project: ''
-    # steps:
-    #   - name: Set Global Variables
-    #     id: set_vars
-    #     run: |
-    #       # Inputs 
-    #       echo "test_env=${{ github.event.client_payload.test_env || inputs.test_env }}" >> $GITHUB_OUTPUT
-    #       echo "test_type=${{ github.event.client_payload.test_type || inputs.test_type }}" >> $GITHUB_OUTPUT
-    #       echo "test_filter_tag=${{ github.event.client_payload.test_filter_tag || inputs.test_filter_tag }}" >> $GITHUB_OUTPUT
-          
+        
   run_automated_test:
     name: Run Automation Test 
     needs: set_env
