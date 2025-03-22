@@ -39,13 +39,11 @@ on:
         options:
           - DEV
           - STAGE
-          - PROD
       auth0_dest_tenant:
         description: 'Auth0 Destination Tenant'
         required: true
         type: choice
         options:
-          - DEV
           - STAGE
           - PROD
       firebase_sync_rc:
@@ -104,8 +102,8 @@ jobs:
     if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync-v2.yml@main
     secrets:
-      source_config : ${{ (fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD) || (fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE) || secrets.AUTH0_CONFIG_DEV }}
-      dest_config : ${{ (fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD) || (fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE) || secrets.AUTH0_CONFIG_DEV }}
+      source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
+      dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD || secrets.AUTH0_CONFIG_STAGE }}
 
        
   sync_data_firebase:
