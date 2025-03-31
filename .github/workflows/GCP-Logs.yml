@@ -1,4 +1,4 @@
-name: Download and Extract GCP Logs
+name: '[Util] Download and Extract GCP Logs'
 
 on:
   workflow_dispatch:
