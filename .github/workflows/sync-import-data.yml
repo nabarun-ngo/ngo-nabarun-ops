@@ -1,4 +1,4 @@
-name: '[Manual] Sync & Import Data | Auth0 Tenants | FB Remote Config'
+name: '[Util] Sync & Import Data | Auth0 Tenants | FB Remote Config'
 
 on:
   repository_dispatch:
