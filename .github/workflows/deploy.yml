@@ -1,4 +1,4 @@
-name: '[Manual] Deploy to GCP (GAE), Firebase (Hosting), Sync Env (Auth0,Remote Config), SmokeTest'
+name: '[Deploy] Deploy to GCP (GAE), Firebase (Hosting), Sync Env (Auth0,Remote Config), SmokeTest'
 on:
   repository_dispatch:
     types: [Trigger-Deploy-Sync-Test]
