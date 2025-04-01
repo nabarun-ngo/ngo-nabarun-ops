@@ -24,7 +24,10 @@ on:
        required: false
        type: string
        default: ''
-
+     cancel_running_test:
+       required: false
+       type: boolean
+       default: false
 jobs:
   set_env:
     name: 'SetUp Environment'
@@ -34,6 +37,9 @@ jobs:
       client_payload: ${{ toJson(github.event.client_payload) }}
         
   run_automated_test:
+    concurrency:
+      group: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' && format('smoke-test-{0}', fromJson(needs.set_env.outputs.variables).test_env) || '' }}
+      cancel-in-progress: ${{ inputs.cancel_running_test}}
     name: Run Automation Test 
     needs: set_env
     if: ${{ fromJson(needs.set_env.outputs.variables).test_env != 'prod' }}
