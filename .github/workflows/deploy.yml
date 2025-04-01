@@ -1,4 +1,4 @@
-name: '[Deploy] Deploy to GCP (GAE), Firebase (Hosting), Sync Env (Auth0,Remote Config), SmokeTest'
+name: '[Deploy] Deploy, Sync and Test Applications'
 on:
   repository_dispatch:
     types: [Trigger-Deploy-Sync-Test]
@@ -28,7 +28,6 @@ on:
        type: choice
        options:
          - stage
-         - prod
      auth0_sync:
        description: 'Sync Environments'
        required: true
@@ -83,57 +82,37 @@ jobs:
       if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync || fromJson(needs.set_env.outputs.variables).target_env == 'prod' }}
       needs: set_env
       name: Trigger Sync Auth0 & Firebase
-      runs-on: ubuntu-latest
-      steps:
-       - name: Repository Dispatch
-         uses: peter-evans/repository-dispatch@v3
-         with:
-          repository: nabarun-ngo/ngo-nabarun-devops
-          event-type: Trigger-Import-Sync-Data
-          client-payload: |-
-              {
+      uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
+      with:
+        repository: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'nabarun-ngo/ngo-nabarun-prodops' || 'nabarun-ngo/ngo-nabarun-ops' }}
+        event_type: Trigger-Deploy-Sync-Test
+        input_json: |-
+            {
                 "auth0_sync_tenant": true,
                 "auth0_source_tenant": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'STAGE' || 'DEV' }}",
                 "auth0_dest_tenant": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'PROD' || 'STAGE' }}",
                 "firebase_sync_rc" : ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' }},
                 "firebase_source_env" : "STAGE",
                 "firebase_dest_env" : "PROD"
-              }
+            } 
+      secrets:
+        token: ${{ secrets.GITHUB_TOKEN }} 
 
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
     if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && always() }}
     needs: [set_env,firebase_deploy,gcp_deploy]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install GitHub CLI
-        run: |
-          sudo apt update
-          sudo apt install -y gh
-
-      - name: Check if 'Run-Smoke-Test' workflow is already running
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          running=$(gh run list --repo ${{ github.repository }} --status in_progress --json name --jq '.[] | select(.name=="[Trigger] Run Automated Test") | .name')
-           if [[ -n "$running" ]]; then
-            echo "TRIGGER_SMOKE_TEST=false" >> $GITHUB_ENV
-          else
-            echo "TRIGGER_SMOKE_TEST=true" >> $GITHUB_ENV
-          fi
-
-      - name: Print the result
-        run: echo "Trigger Run-Smoke-Test ? $TRIGGER_SMOKE_TEST"
-        
-      - name: Repository Dispatch
-        if:  env.TRIGGER_SMOKE_TEST == 'true'
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          repository: nabarun-ngo/ngo-nabarun-devops
-          event-type: Trigger-Smoke-Test
-          client-payload: |-
-              {
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
+    with:
+        repository: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'nabarun-ngo/ngo-nabarun-prodops' || 'nabarun-ngo/ngo-nabarun-ops' }}
+        event_type: Trigger-Smoke-Test
+        input_json: |-
+            {
                 "test_env": "${{ fromJson(needs.set_env.outputs.variables).target_env }}",
                 "test_type": "Smoke",
-                "test_filter_tag": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}"
-              }
+                "test_filter_tag": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
+                "cancel_running_test": ${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy) }}
+            }
+    secrets:
+        token: ${{ secrets.GITHUB_TOKEN }}
+              
