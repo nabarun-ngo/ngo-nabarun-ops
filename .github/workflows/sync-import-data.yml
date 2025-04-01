@@ -73,4 +73,4 @@ jobs:
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync-v2.yml@main
     secrets:
       source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
-      dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD || secrets.AUTH0_CONFIG_STAGE }}
+      dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
