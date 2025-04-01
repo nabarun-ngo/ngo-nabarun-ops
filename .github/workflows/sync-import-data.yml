@@ -10,16 +10,6 @@ on:
         required: true
         default: false
         type: boolean
-      auth0_import_users:
-        description: "Import Users to AUTH0"
-        required: true
-        default: false
-        type: boolean
-      auth0_delete_users_before_import:
-        description: "Delete Users before AUTH0 Import"
-        required: true
-        default: false
-        type: boolean
       auth0_target_tenant:
         description: 'Auth0 Target Tenant'
         required: true
@@ -45,26 +35,7 @@ on:
         type: choice
         options:
           - STAGE
-          - PROD
-      firebase_sync_rc:
-        description: "Sync Firebase Remote Config"
-        required: true
-        default: false
-        type: boolean
-      firebase_source_env:
-        description: 'Firebase Source Environment'
-        required: true
-        type: choice
-        options:
-          - STAGE
-          - PROD
-      firebase_dest_env:
-        description: 'Firebase Destination Environment'
-        required: true
-        type: choice
-        options:
-           - STAGE
-           - PROD
+          - DEV
 
 jobs:
   set_env:
@@ -77,7 +48,7 @@ jobs:
   import_data:
     name: 'Import Data'
     needs: [set_env]
-    if: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_permission || fromJson(needs.set_env.outputs.variables).auth0_import_users }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_permission }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
     with:
       branch_name: 'main'
@@ -85,8 +56,8 @@ jobs:
       auth0_import_tenant: ${{ fromJson(needs.set_env.outputs.variables).auth0_target_tenant }}
       input_file: 'Application_Access_Management.xlsx'
       import_data: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_permission }}
-      import_user: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_users }}
-      delete_old_user: ${{ fromJson(needs.set_env.outputs.variables).auth0_delete_users_before_import }}
+      import_user: false
+      delete_old_user: false
       doppler_project: 'nabarun_tools'
       dry_run: false
       app_base_url : 'https://ngonabarun-stage.appspot.com'
@@ -96,25 +67,17 @@ jobs:
       app_token : ${{ secrets.APP_APIKEY }}
 
 
-  sync_data_auth0:
-    name: 'Sync Data - Auth0'
+  sync_data:
+    name: 'Sync Data'
     needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync-v2.yml@main
-    secrets:
-      source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
-      dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD || secrets.AUTH0_CONFIG_STAGE }}
-
-       
-  sync_data_firebase:
-    name: 'Sync Data - Firebase'
-    needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).firebase_sync_rc }}
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Sync-v2.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Sync-Data.yml@main
     with:
-      firebase_source_project: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env == 'PROD' && 'wengonabarun' ||  'nabarun-test' }}
-      firebase_target_project: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env == 'PROD' && 'wengonabarun' ||  'nabarun-test' }}
+      sync_auth0 : ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
+      sync_firebaseRC : false
+ 
     secrets:
-      firebase_service_account_source: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env == 'PROD' && secrets.FB_SA_KEY_PROD ||  secrets.FB_SA_KEY_STAGE }}
-      firebase_service_account_target: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env == 'PROD' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}
+      auth0_source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
+      auth0_dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
+     
+   
        
