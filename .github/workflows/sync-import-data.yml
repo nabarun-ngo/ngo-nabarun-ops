@@ -1,5 +1,4 @@
-name: '[Util] Sync & Import Data | Auth0 Tenants | FB Remote Config'
-
+name: '[Util] Import & Sync Data'
 on:
   repository_dispatch:
     types: [Trigger-Import-Sync-Data]
@@ -44,9 +43,9 @@ jobs:
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
-  
+
   import_data:
-    name: 'Import Data'
+    name: 'Import Auth0 Data'
     needs: [set_env]
     if: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_permission }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
@@ -67,17 +66,11 @@ jobs:
       app_token : ${{ secrets.APP_APIKEY }}
 
 
-  sync_data:
-    name: 'Sync Data'
+  sync_data_auth0:
+    name: 'Sync Auth0 Data'
     needs: set_env
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Sync-Data.yml@main
-    with:
-      sync_auth0 : ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
-      sync_firebaseRC : false
- 
+    if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync-v2.yml@main
     secrets:
-      auth0_source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
-      auth0_dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
-     
-   
-       
+      source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
+      dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'PROD' && secrets.AUTH0_CONFIG_PROD || secrets.AUTH0_CONFIG_STAGE }}
