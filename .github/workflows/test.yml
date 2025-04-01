@@ -10,7 +10,6 @@ on:
        type: choice
        options:
          - stage
-         - prod
      test_type:
        required: true
        description: 'Test Type'
@@ -19,15 +18,17 @@ on:
          - Regression
          - Smoke
      
-     test_filter_tag:
-       description: 'Test Tags'
+     test_filter_tag_smoke:
+       description: 'Smoke Test Tags'
        required: false
        type: string
-       default: ''
-     cancel_running_test:
+       default: '@smoke'
+
+     test_filter_tag_regression:
+       description: 'Regression Test Tags'
        required: false
-       type: boolean
-       default: false
+       type: string
+       default: '@regression'
 jobs:
   set_env:
     name: 'SetUp Environment'
@@ -36,19 +37,20 @@ jobs:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
         
-  run_automated_test:
+  run_automated_test_smoke:
     concurrency:
-      group: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' && format('smoke-test-{0}', fromJson(needs.set_env.outputs.variables).test_env) || '' }}
-      cancel-in-progress: ${{ inputs.cancel_running_test}}
-    name: Run Automation Test 
+      group: smoke_test
+      cancel-in-progress: true
+      
+    name: Run Automated Smoke Test 
     needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).test_env != 'prod' }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
     with:
         branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
         test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
         test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
-        test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag != '' && fromJson(needs.set_env.outputs.variables).test_filter_tag || (fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' && '@smoke' || '@regression') }}
+        test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}
         test_doppler_project_name: 'nabarun_test'
         upload_result: true 
     secrets:
@@ -56,20 +58,20 @@ jobs:
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
 
-  run_automated_test_prod:
-    name: Run Automation Test (PROD)
+  run_automated_test_regression:
+    name: Run Automated Regression Test 
     needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Regression' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
     with:
-        test_env: 'prod'
-        test_doppler_project_name: ${{ fromJson(needs.set_env.outputs.variables).doppler_project }}
+        branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
+        test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
+        test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
+        test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
+        test_doppler_project_name: 'nabarun_test'
         upload_result: true 
-        test_cucumber_tags: '@smokeprod'
-        test_type: 'Smoke'
     secrets:
-      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_PROD }}
+      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
-      
    
