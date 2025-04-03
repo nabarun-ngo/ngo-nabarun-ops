@@ -110,7 +110,7 @@ jobs:
             {
                 "test_env": "${{ fromJson(needs.set_env.outputs.variables).target_env }}",
                 "test_type": "Smoke",
-                "test_filter_tag": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
+                "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
                 "cancel_running_test": ${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy) }}
             }
     secrets:
