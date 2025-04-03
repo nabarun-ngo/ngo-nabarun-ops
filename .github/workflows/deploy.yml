@@ -1,7 +1,7 @@
 name: '[Deploy] Deploy, Sync and Test Applications'
 on:
   repository_dispatch:
-    types: [Trigger-Deploy-Sync-Test]
+    types: [Trigger-Deploy-Sync-Test,Trigger-DeployFE-Sync-Test,Trigger-DeployBE-Sync-Test]
   workflow_dispatch:
     inputs:
      fe_deploy:
