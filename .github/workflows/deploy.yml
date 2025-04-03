@@ -85,7 +85,7 @@ jobs:
       uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
       with:
         repository: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'nabarun-ngo/ngo-nabarun-prodops' || 'nabarun-ngo/ngo-nabarun-ops' }}
-        event_type: Trigger-Deploy-Sync-Test
+        event_type: Trigger-Import-Sync-Data
         input_json: |-
             {
                 "auth0_sync_tenant": true,
