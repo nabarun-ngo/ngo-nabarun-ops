@@ -39,6 +39,9 @@ on:
        type: boolean
        default: true    
 
+permissions:
+      deployments: write
+      
 jobs:
   set_env:
     name: 'SetUp Environment'
