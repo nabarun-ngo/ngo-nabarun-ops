@@ -57,7 +57,6 @@ jobs:
      repo_name: 'ngo-nabarun-fe'
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
-     environment_url: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'https://wengonabarun.web.app' || 'https://nabarun-test.web.app' }} 
      firebase_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'wengonabarun' || 'nabarun-test' }}
      npm_run_command: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm ci --legacy-peer-deps && npm run build' || 'npm ci --legacy-peer-deps && npm run buildstage' }}
     secrets:
@@ -71,6 +70,9 @@ jobs:
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/GCP-Deploy.yml@main
     with:
      tag_name: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
+     repo_name: 'ngo-nabarun-be'
+     repo_owner_name: 'nabarun-ngo'
+     environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
      target_folder: 'ngo-nabarun-app/target'
      gcp_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ngonabarun' || 'ngonabarun-stage' }}
      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
@@ -79,7 +81,7 @@ jobs:
     secrets:
       gcp_service_account: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
       app_doppler_service_token: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.DOPPLER_TOKEN_NABARUN_BACKEND_PROD || secrets.DOPPLER_TOKEN_NABARUN_BACKEND_STAGE }}
- 
+      repo_token: ${{ secrets.PAT }}
 
   sync_data:
       # always Running this data sync for prod deployment
