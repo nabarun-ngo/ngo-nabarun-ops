@@ -22,7 +22,7 @@ jobs:
       source_db: ${{ inputs.target_env == 'prod' && 'nabarun_stage' || 'nabarun_prod3' }}
       dest_db: ${{ inputs.target_env == 'prod' && 'nabarun_prod3' || 'nabarun_stage' }}
       environment_name: ${{ inputs.target_env }}
-      repository_name: 'ngo-nabarun-be'
+      repository_name: 'nabarun-ngo/ngo-nabarun-be'
       branch_name: ${{ inputs.target_env == 'prod' && 'master' || 'stage' }}
     secrets:
       MONGO_URI: ${{ secrets.APP_MONGODB_URI }}
