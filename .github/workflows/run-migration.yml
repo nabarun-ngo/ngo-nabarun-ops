@@ -17,7 +17,7 @@ jobs:
   migrate:
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-MongoDB-Migration.yml@main
     with:
-      working_directory: 'ngo-nabarun-be/ngo-nabarun-app/migrate'
+      working_directory: 'ngo-nabarun-app/migrate'
       script_file: ${{ inputs.script_file }}
       source_db: ${{ inputs.target_env == 'prod' && 'nabarun_stage' || 'nabarun_prod3' }}
       dest_db: ${{ inputs.target_env == 'prod' && 'nabarun_prod3' || 'nabarun_stage' }}
