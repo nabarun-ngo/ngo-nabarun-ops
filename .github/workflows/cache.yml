@@ -41,7 +41,8 @@ jobs:
      name: Redis Ping Pong
      if: ${{ github.event.inputs.action == 'ping' }}
      uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/redis-ping-pong.yml@main
-     secrets:
+     with:
        redis_host: ${{ secrets.REDIS_HOST }}
        redis_port: ${{ secrets.REDIS_PORT }}
+     secrets:
        redis_password: ${{ secrets.REDIS_PASSWORD }}
