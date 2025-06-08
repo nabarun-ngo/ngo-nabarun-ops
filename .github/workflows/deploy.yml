@@ -103,7 +103,16 @@ jobs:
             } 
       secrets:
         token: ${{ secrets.GITHUB_TOKEN }} 
-
+  dump_needs_context:
+    name: Dump Needs Context
+    needs: [set_env, firebase_deploy, gcp_deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump Needs Context
+        run: |
+          echo "Firebase Deploy Result: ${{ needs.firebase_deploy.result }}"
+          echo "GCP Deploy Result: ${{ needs.gcp_deploy.result }}"
+          echo "Run Smoke Test: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}"
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
     if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (needs.firebase_deploy.result == 'success' || needs.gcp_deploy.result == 'success') && always() }}
