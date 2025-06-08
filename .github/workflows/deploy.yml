@@ -106,7 +106,7 @@ jobs:
 
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
-    if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (contains(needs.firebase_deploy.result, 'success') || contains(needs.gcp_deploy.result, 'success'))  }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (needs.firebase_deploy.result == 'success' || needs.gcp_deploy.result == 'success') && always() }}
     needs: [set_env,firebase_deploy,gcp_deploy]
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
     with:
