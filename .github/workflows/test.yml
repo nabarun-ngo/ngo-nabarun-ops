@@ -62,7 +62,7 @@ jobs:
     name: Run Automated Regression Test 
     needs: set_env
     if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Regression' }}
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
     with:
         branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
         test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
