@@ -46,7 +46,7 @@ jobs:
     name: Run Automated Smoke Test 
     needs: set_env
     if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' }}
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Tests.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
     with:
         branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
         test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
@@ -54,6 +54,7 @@ jobs:
         test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}
         test_doppler_project_name: 'nabarun_test'
         upload_result: true 
+        max_tests_per_matrix: 1
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
@@ -70,7 +71,8 @@ jobs:
         test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
         test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
         test_doppler_project_name: 'nabarun_test'
-        upload_result: true 
+        upload_result: true
+        max_tests_per_matrix: 2
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
