@@ -29,6 +29,10 @@ on:
        required: false
        type: string
        default: '@regression'
+permissions: 
+  contents: read
+  actions: read
+  checks: write
 jobs:
   set_env:
     name: 'SetUp Environment'
