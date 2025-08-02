@@ -1,4 +1,16 @@
 name: '[Deploy] Deploy, Sync and Test Applications'
+run-name: >
+  Deploying to ${{ github.event_name == 'repository_dispatch' 
+    && github.event.client_payload.target_env 
+    || inputs.target_env 
+  }} — FE:${{ github.event_name == 'repository_dispatch' 
+    && github.event.client_payload.fe_tag_name 
+    || inputs.fe_tag_name 
+  }} BE:${{ github.event_name == 'repository_dispatch' 
+    && github.event.client_payload.be_tag_name 
+    || inputs.be_tag_name 
+  }}
+  
 on:
   repository_dispatch:
     types: [Trigger-Deploy-Sync-Test,Trigger-DeployFE-Sync-Test,Trigger-DeployBE-Sync-Test]
