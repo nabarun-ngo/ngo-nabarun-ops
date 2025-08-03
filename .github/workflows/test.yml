@@ -2,6 +2,9 @@ name: '[Test] Run Automated Test'
 on:
   repository_dispatch:
     types: [Trigger-Smoke-Test,Trigger-Test]
+  schedule:
+    - cron: '30 18 * * 5'
+    
   workflow_dispatch:
     inputs:
      test_env:
@@ -14,6 +17,7 @@ on:
        required: true
        description: 'Test Type'
        type: choice
+       default: Regression
        options:
          - Regression
          - Smoke
