@@ -73,7 +73,7 @@ jobs:
      repo_name: 'ngo-nabarun-fe'
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
-     firebase_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'wengonabarun' || 'nabarun-test' }}
+     firebase_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.FB_PROJECT_ID_PROD || secrets.FB_PROJECT_ID_STAGE }}
      npm_run_command: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm ci --legacy-peer-deps && npm run build' || 'npm ci --legacy-peer-deps && npm run build:stage' }}
     secrets:
       firebase_service_account: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}
