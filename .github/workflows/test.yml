@@ -58,9 +58,9 @@ jobs:
         test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}
         test_doppler_project_name: 'nabarun_test'
         upload_result: true 
-        max_tests_per_matrix: 1
+        max_tests_per_matrix: 5
     secrets:
-      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
+      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
 
@@ -76,9 +76,9 @@ jobs:
         test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
         test_doppler_project_name: 'nabarun_test'
         upload_result: true
-        max_tests_per_matrix: 2
+        max_tests_per_matrix: 10
     secrets:
-      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
+      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
    
