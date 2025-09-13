@@ -73,7 +73,7 @@ jobs:
      repo_name: 'ngo-nabarun-fe'
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
-     firebase_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.FB_PROJECT_ID_PROD || secrets.FB_PROJECT_ID_STAGE }}
+     firebase_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && vars.FB_PROJECT_ID_PROD || vars.FB_PROJECT_ID_STAGE }}
      npm_run_command: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm ci --legacy-peer-deps && npm run build' || 'npm ci --legacy-peer-deps && npm run build:stage' }}
     secrets:
       firebase_service_account: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}
@@ -90,7 +90,7 @@ jobs:
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
      target_folder: 'ngo-nabarun-app/target'
-     gcp_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ngonabarun' || 'ngonabarun-stage' }}
+     gcp_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && vars.GCP_PROJECT_ID_PROD || vars.GCP_PROJECT_ID_STAGE }}
      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
      app_doppler_project_name: 'nabarun_backend' 
      app_log_level: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'INFO' || 'DEBUG' }}
