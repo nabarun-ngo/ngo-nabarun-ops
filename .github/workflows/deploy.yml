@@ -22,20 +22,20 @@ on:
        type: boolean
        default: false
      fe_tag_name:
-       required: false
+       required: true
        description: 'Tag to deploy (Frontend)'
        type: string
-       default: ''
+       default: 'latest'
      be_deploy:
        description: 'Deploy Backend (Spring Boot)'
        required: true
        type: boolean
        default: false
      be_tag_name:
-       required: false
+       required: true
        description: 'Tag to deploy (Backend)'
        type: string
-       default: ''
+       default: 'latest'
      target_env:
        required: true
        description: 'Target Environment'
