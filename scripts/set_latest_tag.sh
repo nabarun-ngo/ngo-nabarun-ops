@@ -38,14 +38,14 @@ get_latest_tag() {
 }
 
 # Only fetch FE_TAG if not already set
-if [[ -z "${fe_tag_name:-}" ]]; then
+if [[ "${fe_tag_name}" == "latest" ]]; then
   FE_TAG=$(get_latest_tag "$FE_REPO" "$BRANCH")
   [[ -n "${GITHUB_ENV:-}" ]] && echo "fe_tag_name=$FE_TAG" >> "$GITHUB_ENV"
  echo "✅ fe_tag_name=$FE_TAG" 
 fi
 
 # Only fetch BE_TAG if not already set
-if [[ -z "${be_tag_name:-}" ]]; then
+if [[ "${be_tag_name}" == "latest" ]]; then
   BE_TAG=$(get_latest_tag "$BE_REPO" "$BRANCH")
   [[ -n "${GITHUB_ENV:-}" ]] && echo "be_tag_name=$BE_TAG" >> "$GITHUB_ENV"
   echo "✅ be_tag_name=$BE_TAG"
