@@ -15,16 +15,8 @@ on:
         required: true
         default: false
         type: boolean
-      auth0_source_tenant:
-        description: 'Auth0 Source Tenant'
-        required: true
-        type: choice
-        options:
-          - dev
-          - stage
-          - prod
       auth0_dest_tenant:
-        description: 'Auth0 Destination Tenant'
+        description: 'Auth0 Target Tenant'
         required: true
         type: choice
         options:
@@ -32,17 +24,11 @@ on:
           - prod
       firebase_sync_rc:
         description: "Sync Firebase Remote Config"
-        required: false
+        required: true
         type: boolean
         default: false
-      firebase_source_env:
-        description: 'Firebase Source Environment'
-        required: true
-        type: choice
-        options:
-          - stage
       firebase_dest_env:
-        description: 'Firebase Destination Environment'  
+        description: 'Firebase Target Environment'  
         required: true
         type: choice
         options:
