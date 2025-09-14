@@ -1,4 +1,11 @@
 name: '[Deploy] Deploy, Sync and Test Applications'
+run-name: >
+  ${{ format('{0}Deploying to {1} — FE:{2} BE:{3}',
+    github.event.client_payload.pr_number && format('PR #{0} ', github.event.client_payload.pr_number) || '',
+    github.event.client_payload.target_env || inputs.target_env,
+    github.event.client_payload.fe_tag_name || inputs.fe_tag_name,
+    github.event.client_payload.be_tag_name || inputs.be_tag_name
+  ) }}  
   
 on:
   repository_dispatch:
