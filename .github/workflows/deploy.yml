@@ -22,7 +22,7 @@ on:
        type: boolean
        default: false
      fe_tag_name:
-       required: true
+       required: false
        description: 'Tag to deploy (Frontend)'
        type: string
      be_deploy:
@@ -31,7 +31,7 @@ on:
        type: boolean
        default: false
      be_tag_name:
-       required: true
+       required: false
        description: 'Tag to deploy (Backend)'
        type: string
      target_env:
