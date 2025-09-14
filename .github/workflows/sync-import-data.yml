@@ -51,12 +51,12 @@ jobs:
       firebase_target_env: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env }}
       sync_auth0: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
       sync_firebaseRC: ${{ fromJson(needs.set_env.outputs.variables).firebase_sync_rc }}
-      firebase_source_project: ${{ vars.FB_PROJECT_ID_SOURCE }}
-      firebase_target_project: ${{ vars.FB_PROJECT_ID }}
     secrets:
       auth0_source_config : ${{ secrets.AUTH0_CONFIG_SOURCE }}
       auth0_dest_config : ${{ secrets.AUTH0_CONFIG }}
       firebase_service_account_source: ${{ secrets.FB_SA_KEY_SOURCE }}
       firebase_service_account_target: ${{ secrets.FB_SA_KEY }}
+      firebase_source_project: ${{ secrets.FB_PROJECT_ID_SOURCE }}
+      firebase_target_project: ${{ secrets.FB_PROJECT_ID }}
 
   
