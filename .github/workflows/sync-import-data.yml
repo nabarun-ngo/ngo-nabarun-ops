@@ -1,4 +1,8 @@
 name: '[Util] Import & Sync Data'
+run-name: >
+  ${{ (github.event.client_payload.auth0_sync_tenant || inputs.auth0_sync_tenant) && format('Syncing Auth0 tenant from {0} to {1}', github.event.client_payload.auth0_source_tenant || inputs.auth0_source_tenant, github.event.client_payload.auth0_dest_tenant || inputs.auth0_dest_tenant) || '' }}
+  ${{ (github.event.client_payload.firebase_sync_rc || inputs.firebase_sync_rc) && format(' & Firebase env from {0} to {1}', github.event.client_payload.firebase_source_env || inputs.firebase_source_env, github.event.client_payload.firebase_dest_env || inputs.firebase_dest_env) || '' }}
+
 on:
   repository_dispatch:
     types: 
