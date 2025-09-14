@@ -49,6 +49,7 @@ on:
        options:
          - stage
          - prod
+         - prod
      auth0_sync:
        description: 'Sync Environments'
        required: true
@@ -99,7 +100,7 @@ jobs:
      gcp_project_id: ${{ vars.GCP_PROJECT_ID }}
      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
      app_doppler_project_name: 'nabarun_backend' 
-     app_log_level: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'INFO' || 'DEBUG' }}
+     app_log_level: ${{ vars.GCP_LOG_LEVEL }}
     secrets:
       gcp_service_account: ${{ secrets.GCP_SA_KEY }}
       app_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND }}
@@ -112,7 +113,7 @@ jobs:
       name: Trigger Sync Auth0 & Firebase
       uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
       with:
-        repository: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'nabarun-ngo/ngo-nabarun-prodops' || 'nabarun-ngo/ngo-nabarun-ops' }}
+        repository: 'nabarun-ngo/ngo-nabarun-ops'
         event_type: Trigger-Import-Sync-Data
         input_json: |-
             {
@@ -126,6 +127,7 @@ jobs:
       secrets:
         token: ${{ secrets.GITHUB_TOKEN }} 
   
+  
   dump_needs_context:
     name: Dump Needs Context
     needs: [set_env, firebase_deploy, gcp_deploy]
@@ -136,6 +138,7 @@ jobs:
           echo "Firebase Deploy Result: ${{ needs.firebase_deploy.result }}"
           echo "GCP Deploy Result: ${{ needs.gcp_deploy.result }}"
           echo "Run Smoke Test: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}"
+  
   
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
