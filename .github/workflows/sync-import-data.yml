@@ -22,12 +22,14 @@ on:
         options:
           - DEV
           - STAGE
+          - PROD
       auth0_dest_tenant:
         description: 'Auth0 Destination Tenant'
         required: true
         type: choice
         options:
           - STAGE
+          - PROD
           - DEV
       firebase_sync_rc:
         description: "Sync Firebase Remote Config"
