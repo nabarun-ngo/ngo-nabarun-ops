@@ -17,31 +17,31 @@ on:
         default: ""
 
 jobs:
-   view-redis-keys:
-     name: View Redis Keys
-     if: ${{ github.event.inputs.action == 'view' }}
-     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/redis-view-keys.yml@main
-     secrets:
-       redis_host: ${{ secrets.REDIS_HOST }}
-       redis_port: ${{ secrets.REDIS_PORT }}
-       redis_password: ${{ secrets.REDIS_PASSWORD }}
+   redis-ops:
+    name: 'Redis Operations'
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.action == 'view' }}
+    steps:
+    - name: View Redis Keys
+      uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/redis-view-keys@main
+      with:
+        redis_host: ${{ secrets.REDIS_HOST }}
+        redis_port: ${{ secrets.REDIS_PORT }}
+        redis_password: ${{ secrets.REDIS_PASSWORD }}
 
-   delete-redis-keys:
-     name: Call Redis Delete Keys
-     if: ${{ github.event.inputs.action == 'delete' }}
-     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/redis-delete-keys.yml@main
-     with:
+    - name: Call Redis Delete Keys
+      if: ${{ github.event.inputs.action == 'delete' }}
+      uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/redis-delete-keys@main
+      with:
         key: ${{ github.event.inputs.key }}
-     secrets:
         redis_host: ${{ secrets.REDIS_HOST }}
         redis_port: ${{ secrets.REDIS_PORT }}
         redis_password: ${{ secrets.REDIS_PASSWORD }}
          
-   ping-redis:
-     name: Redis Ping Pong
-     if: ${{ github.event.inputs.action == 'ping' }}
-     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/redis-ping-pong.yml@main
-     secrets:
-       redis_host: ${{ secrets.REDIS_HOST }}
-       redis_port: ${{ secrets.REDIS_PORT }}
-       redis_password: ${{ secrets.REDIS_PASSWORD }}
+    - name: Redis Ping Pong
+      if: ${{ github.event.inputs.action == 'ping' }}
+      uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/redis-ping-pong@main
+      with:
+        redis_host: ${{ secrets.REDIS_HOST }}
+        redis_port: ${{ secrets.REDIS_PORT }}
+        redis_password: ${{ secrets.REDIS_PASSWORD }}

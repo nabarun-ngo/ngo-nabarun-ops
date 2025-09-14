@@ -14,49 +14,32 @@ on:
         options:
           - stage
           - prod
+      output_type:
+        description: 'Output File Type'
+        required: true
+        type: choice
+        options:
+          - html
+          - txt
+          - csv
 
 jobs:
   download-logs:
     runs-on: ubuntu-latest
-
+    environment: ${{inputs.environment}}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v2
+      - name: Get GCP Log
+        id: get_logs
+        uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/download-logs@main
         with:
-          credentials_json: ${{ github.event.inputs.environment == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
-
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-
-      - name: Download logs with user-provided UUID
-        run: |
-          gcloud logging read \
-            "textPayload:\"${{ github.event.inputs.uuid }}\"" \
-            --format=json > gcp_json_logs-${{ github.event.inputs.uuid }}.json
+          uuid: ${{ inputs.uuid }}
+          gcp_sa_key: ${{ secrets.GCP_SA_KEY }}
+          output_type: ${{ inputs.output_type }}
       
-      - name: Extract Data
-        run: |
-          jq -r 'reverse | .[] | .textPayload' gcp_json_logs-${{ github.event.inputs.uuid }}.json > gcp_text_logs-${{ github.event.inputs.uuid }}.txt
-          jq -r 'reverse | .[] | [.textPayload] | @csv' gcp_json_logs-${{ github.event.inputs.uuid }}.json > gcp_csv_logs-${{ github.event.inputs.uuid }}.csv
-
-      - name: Upload json logs as artifact
+      - name: Upload logs as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gcp_json_logs-${{ github.event.inputs.uuid }}
-          path: gcp_json_logs-${{ github.event.inputs.uuid }}.json 
-      
-      - name: Upload text logs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gcp_text_logs-${{ github.event.inputs.uuid }}
-          path: gcp_text_logs-${{ github.event.inputs.uuid }}.txt
-          
-      - name: Upload csv logs as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gcp_csv_logs-${{ github.event.inputs.uuid }}
-          path: gcp_csv_logs-${{ github.event.inputs.uuid }}.csv
+          name: GCP-Logs-${{ inputs.uuid }}
+          path: gcp_${{ inputs.output_type }}_logs-${{ inputs.uuid }}.${{ inputs.output_type }}
+          retention-days: 1
 

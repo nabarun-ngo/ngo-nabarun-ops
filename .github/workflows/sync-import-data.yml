@@ -1,21 +1,11 @@
 name: '[Util] Import & Sync Data'
 on:
   repository_dispatch:
-    types: [Trigger-Import-Sync-Data]
+    types: 
+      - Trigger-Import-Sync-Data
+
   workflow_dispatch:
     inputs:
-      auth0_import_permission:
-        description: "Import Permissions to AUTH0"
-        required: true
-        default: false
-        type: boolean
-      auth0_target_tenant:
-        description: 'Auth0 Target Tenant'
-        required: true
-        type: choice
-        options:
-          - DEV
-          - STAGE
       auth0_sync_tenant:
         description: "Sync AUTH0 Tenants"
         required: true
@@ -35,42 +25,48 @@ on:
         options:
           - STAGE
           - DEV
+      firebase_sync_rc:
+        description: "Sync Firebase Remote Config"
+        required: false
+        type: boolean
+        default: false
+      firebase_source_env:
+        description: 'Firebase Source Environment'
+        required: false
+        type: string
+        default: 'STAGE'
+      firebase_dest_env:
+        description: 'Firebase Destination Environment'  
+        required: false
+        type: string
+        default: 'PROD'
 
 jobs:
   set_env:
     name: 'Setup Inputs'
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Set-Inputs.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Setup-Env.yml@main
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
+      script_path: scripts/set_run_name_sync.sh
 
-  import_data:
-    name: 'Import Auth0 Data'
-    needs: [set_env]
-    if: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_permission }}
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Import.yml@main
-    with:
-      branch_name: 'main'
-      source: 'google_drive'
-      auth0_import_tenant: ${{ fromJson(needs.set_env.outputs.variables).auth0_target_tenant }}
-      input_file: 'Application_Access_Management.xlsx'
-      import_data: ${{ fromJson(needs.set_env.outputs.variables).auth0_import_permission }}
-      import_user: false
-      delete_old_user: false
-      doppler_project: 'nabarun_tools'
-      dry_run: false
-      app_base_url : 'https://ngonabarun-stage.appspot.com'
-    secrets:
-      doppler_service_token: ${{ fromJson(needs.set_env.outputs.variables).auth0_target_tenant == 'STAGE' && secrets.DOPPLER_TOKEN_NABARUN_TOOLS_STAGE || secrets.DOPPLER_TOKEN_NABARUN_TOOLS_DEV }}
-      gcp_service_account: ${{ secrets.FB_SA_KEY_STAGE }}
-      app_token : ${{ secrets.APP_APIKEY }}
+  # sync_data_auth0:
+  #   name: 'Sync Auth0 Data'
+  #   needs: set_env
+  #   if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
+  #   uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Sync-Auth0-v2.yml@main
+  #   secrets:
+  #     source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
+  #     dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
 
-
-  sync_data_auth0:
-    name: 'Sync Auth0 Data'
-    needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync_tenant }}
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Auth0-Sync-v2.yml@main
-    secrets:
-      source_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_source_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
-      dest_config : ${{ fromJson(needs.set_env.outputs.variables).auth0_dest_tenant == 'STAGE' && secrets.AUTH0_CONFIG_STAGE || secrets.AUTH0_CONFIG_DEV }}
+  # sync_data_firebase:
+  #   name: 'Sync Firebase Remote Config'
+  #   needs: set_env
+  #   if: ${{ fromJson(needs.set_env.outputs.variables).firebase_sync_rc }}
+  #   uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Sync-v2.yml@main
+  #   with:
+  #     firebase_source_project: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env == 'STAGE' && vars.FB_PROJECT_ID_STAGE || vars.FB_PROJECT_ID_DEV }}
+  #     firebase_target_project: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env == 'PROD' && vars.FB_PROJECT_ID_PROD || vars.FB_PROJECT_ID_STAGE }}
+  #   secrets:
+  #     firebase_service_account_source: ${{ fromJson(needs.set_env.outputs.variables).firebase_source_env == 'STAGE' && secrets.FB_SA_KEY_STAGE || secrets.FB_SA_KEY_DEV }}
+  #     firebase_service_account_target: ${{ fromJson(needs.set_env.outputs.variables).firebase_dest_env == 'PROD' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}

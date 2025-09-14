@@ -1,23 +1,27 @@
 name: '[Deploy] Deploy, Sync and Test Applications'
-run-name: >
-  ${{ github.event_name == 'repository_dispatch' 
-    && github.event.client_payload.pr_number 
-    || ''
-  }}
-  Deploying to ${{ github.event_name == 'repository_dispatch' 
-    && github.event.client_payload.target_env 
-    || inputs.target_env 
-  }} — FE:${{ github.event_name == 'repository_dispatch' 
-    && github.event.client_payload.fe_tag_name 
-    || inputs.fe_tag_name 
-  }} BE:${{ github.event_name == 'repository_dispatch' 
-    && github.event.client_payload.be_tag_name 
-    || inputs.be_tag_name 
-  }}
+# run-name: >
+#   ${{ github.event_name == 'repository_dispatch' 
+#     && github.event.client_payload.pr_number 
+#     || ''
+#   }}
+#   Deploying to ${{ github.event_name == 'repository_dispatch' 
+#     && github.event.client_payload.target_env 
+#     || inputs.target_env 
+#   }} — FE:${{ github.event_name == 'repository_dispatch' 
+#     && github.event.client_payload.fe_tag_name 
+#     || inputs.fe_tag_name 
+#   }} BE:${{ github.event_name == 'repository_dispatch' 
+#     && github.event.client_payload.be_tag_name 
+#     || inputs.be_tag_name 
+#   }}
   
 on:
   repository_dispatch:
-    types: [Trigger-Deploy-Sync-Test,Trigger-DeployFE-Sync-Test,Trigger-DeployBE-Sync-Test]
+    types: 
+      - Trigger-Deploy-Sync-Test
+      - Trigger-DeployFE-Sync-Test
+      - Trigger-DeployBE-Sync-Test
+
   workflow_dispatch:
     inputs:
      fe_deploy:
@@ -44,6 +48,7 @@ on:
        type: choice
        options:
          - stage
+         - prod
      auth0_sync:
        description: 'Sync Environments'
        required: true
@@ -58,45 +63,46 @@ on:
 jobs:
   set_env:
     name: 'SetUp Environment'
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Set-Inputs.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Setup-Env.yml@main
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
+      script_path: scripts/set_run_name_deploy.sh
      
   firebase_deploy:
     if: ${{ fromJson(needs.set_env.outputs.variables).fe_deploy }}
     needs: set_env
     name: Deploy to Firebase
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Firebase-Deploy.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-Firebase.yml@main
     with:
      tag_name: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
      repo_name: 'ngo-nabarun-fe'
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
-     firebase_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && vars.FB_PROJECT_ID_PROD || vars.FB_PROJECT_ID_STAGE }}
+     firebase_project_id: ${{ vars.FB_PROJECT_ID }}
      npm_run_command: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm ci --legacy-peer-deps && npm run build' || 'npm ci --legacy-peer-deps && npm run build:stage' }}
     secrets:
-      firebase_service_account: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.FB_SA_KEY_PROD || secrets.FB_SA_KEY_STAGE }}
+      firebase_service_account: ${{ secrets.FB_SA_KEY }}
       repo_token: ${{ secrets.PAT }}
   
   gcp_deploy:
     if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy }}
     needs: set_env
     name: Deploy to GCP App Engine 
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/GCP-Deploy.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP.yml@main
     with:
      tag_name: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
      repo_name: 'ngo-nabarun-be'
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
      target_folder: 'ngo-nabarun-app/target'
-     gcp_project_id: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && vars.GCP_PROJECT_ID_PROD || vars.GCP_PROJECT_ID_STAGE }}
+     gcp_project_id: ${{ vars.GCP_PROJECT_ID }}
      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
      app_doppler_project_name: 'nabarun_backend' 
      app_log_level: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'INFO' || 'DEBUG' }}
     secrets:
-      gcp_service_account: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
-      app_doppler_service_token: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && secrets.DOPPLER_TOKEN_NABARUN_BACKEND_PROD || secrets.DOPPLER_TOKEN_NABARUN_BACKEND_STAGE }}
+      gcp_service_account: ${{ secrets.GCP_SA_KEY }}
+      app_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND }}
       repo_token: ${{ secrets.PAT }}
 
   sync_data:
@@ -119,6 +125,7 @@ jobs:
             } 
       secrets:
         token: ${{ secrets.GITHUB_TOKEN }} 
+  
   dump_needs_context:
     name: Dump Needs Context
     needs: [set_env, firebase_deploy, gcp_deploy]
@@ -129,6 +136,7 @@ jobs:
           echo "Firebase Deploy Result: ${{ needs.firebase_deploy.result }}"
           echo "GCP Deploy Result: ${{ needs.gcp_deploy.result }}"
           echo "Run Smoke Test: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}"
+  
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
     if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (needs.firebase_deploy.result == 'success' || needs.gcp_deploy.result == 'success') && always() }}

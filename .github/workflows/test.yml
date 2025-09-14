@@ -37,7 +37,7 @@ on:
 jobs:
   set_env:
     name: 'SetUp Environment'
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Set-Inputs.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Setup-Env.yml@main
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
