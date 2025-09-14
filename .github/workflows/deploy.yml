@@ -59,7 +59,7 @@ jobs:
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
-      script_path: scripts/set_run_name_deploy.sh
+      script_path: scripts/set_latest_tag.sh
      
   firebase_deploy:
     if: ${{ fromJson(needs.set_env.outputs.variables).fe_deploy }}
