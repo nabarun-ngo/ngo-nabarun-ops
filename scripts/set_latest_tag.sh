@@ -115,34 +115,6 @@ fi
 export SCRIPT_SCRIPT_EXECUTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 export SCRIPT_REPOSITORIES_PROCESSED=2
 
-# Output summary JSON with deployment information
-echo "### JSON_OUTPUT_START ###"
-cat << EOF
-{
-  "deployment_info": {
-    "frontend": {
-      "repository": "$FE_REPO",
-      "tag": "${FE_TAG:-unknown}",
-      "branch_used": "$BRANCH",
-      "tag_fetched": $([ "${SCRIPT_FE_TAG_FETCHED:-false}" = "true" ] && echo true || echo false)
-    },
-    "backend": {
-      "repository": "$BE_REPO", 
-      "tag": "${BE_TAG:-unknown}",
-      "branch_used": "$BRANCH",
-      "tag_fetched": $([ "${SCRIPT_BE_TAG_FETCHED:-false}" = "true" ] && echo true || echo false)
-    }
-  },
-  "deployment_metadata": {
-    "target_environment": "$TARGET_ENV",
-    "source_branch": "$BRANCH",
-    "deployment_ready": $([ -n "$FE_TAG" ] && [ -n "$BE_TAG" ] && echo true || echo false),
-    "execution_timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-  }
-}
-EOF
-echo "### JSON_OUTPUT_END ###"
-
 # Final summary
 echo ""
 echo "📋 Tag Resolution Summary:"
