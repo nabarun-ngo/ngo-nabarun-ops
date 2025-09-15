@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Updated script for Setup-Env workflow integration
+# Fixed script for Setup-Env workflow integration
 # This script fetches the latest tags for FE and BE repositories
 
 echo "🚀 Fetching latest repository tags..."
@@ -32,7 +32,8 @@ get_latest_tag() {
   local repo="$1"
   local branch="$2"
   
-  echo "🔍 Fetching latest tag for $repo on branch $branch..."
+  # Send debug info to stderr so it doesn't interfere with return value
+  echo "🔍 Fetching latest tag for $repo on branch $branch..." >&2
 
   local tmp_dir
   tmp_dir=$(mktemp -d)
@@ -58,6 +59,7 @@ get_latest_tag() {
     return 1
   fi
 
+  # Only output the tag (to stdout) - no debug info
   echo "$latest_tag"
 }
 
@@ -74,8 +76,14 @@ if [[ -z "$FE_TAG_INPUT" || "$FE_TAG_INPUT" == "latest" ]]; then
     export SCRIPT_FE_TAG_NAME="$FE_TAG"
     export SCRIPT_FE_TAG_FETCHED=true
     
-    # Also set in GITHUB_ENV if available (backward compatibility)
-    [[ -n "${GITHUB_ENV:-}" ]] && echo "fe_tag_name=$FE_TAG" >> "$GITHUB_ENV"
+    # Also set in GITHUB_ENV if available (using multiline format for special characters)
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+      {
+        echo "fe_tag_name<<EOF"
+        echo "$FE_TAG"
+        echo "EOF"
+      } >> "$GITHUB_ENV"
+    fi
   else
     echo "❌ Failed to fetch FE tag"
     export SCRIPT_FE_TAG_FETCHED=false
@@ -97,8 +105,14 @@ if [[ -z "$BE_TAG_INPUT" || "$BE_TAG_INPUT" == "latest" ]]; then
     export SCRIPT_BE_TAG_NAME="$BE_TAG"
     export SCRIPT_BE_TAG_FETCHED=true
     
-    # Also set in GITHUB_ENV if available (backward compatibility)
-    [[ -n "${GITHUB_ENV:-}" ]] && echo "be_tag_name=$BE_TAG" >> "$GITHUB_ENV"
+    # Also set in GITHUB_ENV if available (using multiline format for special characters)
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+      {
+        echo "be_tag_name<<EOF"
+        echo "$BE_TAG"
+        echo "EOF"
+      } >> "$GITHUB_ENV"
+    fi
   else
     echo "❌ Failed to fetch BE tag"
     export SCRIPT_BE_TAG_FETCHED=false
@@ -114,6 +128,34 @@ fi
 # Set additional metadata
 export SCRIPT_SCRIPT_EXECUTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 export SCRIPT_REPOSITORIES_PROCESSED=2
+
+# Output summary JSON with deployment information
+echo "### JSON_OUTPUT_START ###"
+cat << EOF
+{
+  "deployment_info": {
+    "frontend": {
+      "repository": "$FE_REPO",
+      "tag": "${FE_TAG:-unknown}",
+      "branch_used": "$BRANCH",
+      "tag_fetched": $([ "${SCRIPT_FE_TAG_FETCHED:-false}" = "true" ] && echo true || echo false)
+    },
+    "backend": {
+      "repository": "$BE_REPO", 
+      "tag": "${BE_TAG:-unknown}",
+      "branch_used": "$BRANCH",
+      "tag_fetched": $([ "${SCRIPT_BE_TAG_FETCHED:-false}" = "true" ] && echo true || echo false)
+    }
+  },
+  "deployment_metadata": {
+    "target_environment": "$TARGET_ENV",
+    "source_branch": "$BRANCH",
+    "deployment_ready": $([ -n "$FE_TAG" ] && [ -n "$BE_TAG" ] && echo true || echo false),
+    "execution_timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  }
+}
+EOF
+echo "### JSON_OUTPUT_END ###"
 
 # Final summary
 echo ""
