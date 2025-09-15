@@ -41,6 +41,7 @@ jobs:
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
+      
         
   run_automated_test_smoke:
     concurrency:
@@ -77,6 +78,13 @@ jobs:
         test_doppler_project_name: 'nabarun_test'
         upload_result: true
         max_tests_per_matrix: 10
+        app_ui_version: "latest"
+        app_server_version: "latest"
+        repository_name: "nabarun-ngo/ngo-nabarun-test"
+        test_cycle_folder: "1234567"
+        test_case_folder: "7654321"
+        qmetry_project_id: "10005"
+        jira_url: "https://ngonabarun.atlassian.net"
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
