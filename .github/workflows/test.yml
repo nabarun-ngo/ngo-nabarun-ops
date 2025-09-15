@@ -1,7 +1,10 @@
 name: '[Test] Run Automated Test'
 on:
   repository_dispatch:
-    types: [Trigger-Smoke-Test,Trigger-Test]
+    types: 
+     - Trigger-Smoke-Test,
+     - Trigger-Test
+     
   schedule:
     - cron: '30 18 * * 5'
     
@@ -63,9 +66,9 @@ jobs:
         app_ui_version: "latest"
         app_server_version: "latest"
         repository_name: "nabarun-ngo/ngo-nabarun-test"
-        test_cycle_folder: "1234567"
-        test_case_folder: "7654321"
-        qmetry_project_id: "10005"
+        test_cycle_folder: "1388976"
+        test_case_folder: "1449797"
+        qmetry_project_id: "10004"
         jira_url: "https://ngonabarun.atlassian.net"
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS }}
@@ -88,9 +91,9 @@ jobs:
         app_ui_version: "latest"
         app_server_version: "latest"
         repository_name: "nabarun-ngo/ngo-nabarun-test"
-        test_cycle_folder: "1234567"
-        test_case_folder: "7654321"
-        qmetry_project_id: "10005"
+        test_cycle_folder: "1388976"
+        test_case_folder: "1449797"
+        qmetry_project_id: "10004"
         jira_url: "https://ngonabarun.atlassian.net"
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS }}
