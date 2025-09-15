@@ -59,7 +59,7 @@ jobs:
         test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}
         test_doppler_project_name: 'nabarun_test'
         upload_result: true 
-        max_tests_per_matrix: 5
+        max_tests_per_matrix: 1
         app_ui_version: "latest"
         app_server_version: "latest"
         repository_name: "nabarun-ngo/ngo-nabarun-test"
@@ -84,7 +84,7 @@ jobs:
         test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
         test_doppler_project_name: 'nabarun_test'
         upload_result: true
-        max_tests_per_matrix: 10
+        max_tests_per_matrix: 1
         app_ui_version: "latest"
         app_server_version: "latest"
         repository_name: "nabarun-ngo/ngo-nabarun-test"
