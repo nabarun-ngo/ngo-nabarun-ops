@@ -84,7 +84,7 @@ jobs:
     if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy }}
     needs: set_env
     name: Deploy to GCP App Engine 
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP.yml@main
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP-v2.yml@main
     with:
      tag_name: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
      repo_name: 'ngo-nabarun-be'
