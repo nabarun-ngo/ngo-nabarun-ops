@@ -74,9 +74,9 @@ jobs:
      repo_name: 'ngo-nabarun-fe'
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
-     firebase_project_id: ${{ vars.FB_PROJECT_ID }}
      npm_run_command: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm ci --legacy-peer-deps && npm run build' || 'npm ci --legacy-peer-deps && npm run build:stage' }}
     secrets:
+      firebase_project_id: ${{ secrets.FB_PROJECT_ID }}
       firebase_service_account: ${{ secrets.FB_SA_KEY }}
       repo_token: ${{ secrets.PAT }}
   
@@ -91,11 +91,11 @@ jobs:
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
      target_folder: 'ngo-nabarun-app/target'
-     gcp_project_id: ${{ vars.GCP_PROJECT_ID }}
      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
      app_doppler_project_name: 'nabarun_backend' 
      app_log_level: ${{ vars.GCP_LOG_LEVEL }}
     secrets:
+      gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY }}
       app_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND }}
       repo_token: ${{ secrets.PAT }}
