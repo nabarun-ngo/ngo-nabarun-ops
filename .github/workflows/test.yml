@@ -1,102 +1,121 @@
 name: '[Test] Run Automated Test'
+
+run-name: "Running ${{ github.event.client_payload.test_type || inputs.test_type || 'Scheduled' }} Test in ${{ github.event.client_payload.test_env || inputs.test_env || 'Stage' }} environment"
+
 on:
   repository_dispatch:
     types: 
-     - Trigger-Smoke-Test,
-     - Trigger-Test
-     
+      - Trigger-Smoke-Test
+      - Trigger-Test
+      
   schedule:
     - cron: '30 18 * * 5'
     
   workflow_dispatch:
     inputs:
-     test_env:
-       required: true
-       description: 'Test Environment'
-       type: choice
-       options:
-         - stage
-     test_type:
-       required: true
-       description: 'Test Type'
-       type: choice
-       default: Regression
-       options:
-         - Regression
-         - Smoke
-     
-     test_filter_tag_smoke:
-       description: 'Smoke Test Tags'
-       required: false
-       type: string
-       default: '@smoke'
+      test_env:
+        required: true
+        description: 'Test Environment'
+        type: choice
+        default: 'stage'
+        options:
+          - stage
+          - prod
+      test_type:
+        required: true
+        description: 'Test Type'
+        type: choice
+        default: Regression
+        options:
+          - Regression
+          - Smoke
+      test_filter_tag_smoke:
+        description: 'Smoke Test Tags'
+        required: false
+        type: string
+        default: '@smoke'
+      test_filter_tag_regression:
+        description: 'Regression Test Tags'
+        required: false
+        type: string
+        default: '@regression'
+      cancel_running_test:
+        description: 'Cancel running tests before starting new ones'
+        required: false
+        type: boolean
+        default: true
 
-     test_filter_tag_regression:
-       description: 'Regression Test Tags'
-       required: false
-       type: string
-       default: '@regression'
+# Environment variables for reuse across jobs
+env:
+  TEST_REPOSITORY: 'nabarun-ngo/ngo-nabarun-test'
+  TEST_CYCLE_FOLDER: '1388976'
+  TEST_CASE_FOLDER: '1449797'
+  QMETRY_PROJECT_ID: '10004'
+  JIRA_URL: 'https://ngonabarun.atlassian.net'
+  DOPPLER_PROJECT_NAME: 'nabarun_test'
+  APP_UI_VERSION: 'latest'
+  APP_SERVER_VERSION: 'latest'
 
 jobs:
   set_env:
-    name: 'SetUp Environment'
+    name: 'Setup Environment'
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Setup-Env.yml@main
     with:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
-      
-        
+
   run_automated_test_smoke:
+    name: 'Run Smoke Tests'
+    needs: set_env
+    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' }}
     concurrency:
       group: smoke_test
       cancel-in-progress: true
-      
-    name: Run Automated Smoke Test 
-    needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
     with:
-        branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
-        test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
-        test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
-        test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}
-        test_doppler_project_name: 'nabarun_test'
-        upload_result: true 
-        max_tests_per_matrix: 1
-        app_ui_version: "latest"
-        app_server_version: "latest"
-        repository_name: "nabarun-ngo/ngo-nabarun-test"
-        test_cycle_folder: "1388976"
-        test_case_folder: "1449797"
-        qmetry_project_id: "10004"
-        jira_url: "https://ngonabarun.atlassian.net"
+      branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
+      test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
+      test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
+      test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}
+      test_doppler_project_name: ${{ env.DOPPLER_PROJECT_NAME }}
+      upload_result: true
+      max_tests_per_matrix: 1
+      app_ui_version: ${{ env.APP_UI_VERSION }}
+      app_server_version: ${{ env.APP_SERVER_VERSION }}
+      repository_name: ${{ env.TEST_REPOSITORY }}
+      test_cycle_folder: ${{ env.TEST_CYCLE_FOLDER }}
+      test_case_folder: ${{ env.TEST_CASE_FOLDER }}
+      qmetry_project_id: ${{ env.QMETRY_PROJECT_ID }}
+      jira_url: ${{ env.JIRA_URL }}
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
 
   run_automated_test_regression:
-    name: Run Automated Regression Test 
+    name: 'Run Regression Tests'
     needs: set_env
     if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Regression' }}
+    concurrency:
+      group: regression_test
+      cancel-in-progress: false
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
     with:
-        branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
-        test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
-        test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
-        test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
-        test_doppler_project_name: 'nabarun_test'
-        upload_result: true
-        max_tests_per_matrix: 1
-        app_ui_version: "latest"
-        app_server_version: "latest"
-        repository_name: "nabarun-ngo/ngo-nabarun-test"
-        test_cycle_folder: "1388976"
-        test_case_folder: "1449797"
-        qmetry_project_id: "10004"
-        jira_url: "https://ngonabarun.atlassian.net"
+      branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
+      test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
+      test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
+      test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
+      test_doppler_project_name: ${{ env.DOPPLER_PROJECT_NAME }}
+      upload_result: true
+      max_tests_per_matrix: 1
+      app_ui_version: ${{ env.APP_UI_VERSION }}
+      app_server_version: ${{ env.APP_SERVER_VERSION }}
+      repository_name: ${{ env.TEST_REPOSITORY }}
+      test_cycle_folder: ${{ env.TEST_CYCLE_FOLDER }}
+      test_case_folder: ${{ env.TEST_CASE_FOLDER }}
+      qmetry_project_id: ${{ env.QMETRY_PROJECT_ID }}
+      jira_url: ${{ env.JIRA_URL }}
     secrets:
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
-   
