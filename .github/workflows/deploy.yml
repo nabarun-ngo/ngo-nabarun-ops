@@ -52,8 +52,17 @@ on:
        description: 'Run Smoke Test'
        required: true
        type: boolean
-       default: true    
-     
+       default: true
+     log_level:
+       description: 'Backend Log Level (only for stage environment)'
+       required: false
+       type: choice
+       default: WARN
+       options:
+         - DEBUG
+         - INFO
+         - WARN
+         - ERROR
 jobs:
   set_env:
     name: 'SetUp Environment'
@@ -93,7 +102,7 @@ jobs:
      target_folder: 'ngo-nabarun-app/target'
      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
      app_doppler_project_name: 'nabarun_backend' 
-     app_log_level: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ERROR' || 'INFO' }}
+     app_log_level: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ERROR' || fromJson(needs.set_env.outputs.variables).log_level || 'WARN' }}
     secrets:
       gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY }}
