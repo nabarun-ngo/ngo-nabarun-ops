@@ -20,7 +20,8 @@ jobs:
    redis-ops:
     name: 'Redis Operations'
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.action == 'view' }}
+    environment: 'prod'
+    if: ${{ github.event.inputs.action != 'ping' }}
     steps:
     - name: View Redis Keys
       uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/redis-view-keys@main
@@ -37,9 +38,13 @@ jobs:
         redis_host: ${{ secrets.REDIS_HOST }}
         redis_port: ${{ secrets.REDIS_PORT }}
         redis_password: ${{ secrets.REDIS_PASSWORD }}
-         
+
+   redis-ping:
+    name: 'Redis Ping'
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.action == 'ping' }}
+    steps:
     - name: Redis Ping Pong
-      if: ${{ github.event.inputs.action == 'ping' }}
       uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/redis-ping-pong@main
       with:
         redis_host: ${{ secrets.REDIS_HOST }}
