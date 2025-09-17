@@ -93,7 +93,7 @@ jobs:
      target_folder: 'ngo-nabarun-app/target'
      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
      app_doppler_project_name: 'nabarun_backend' 
-     app_log_level: ${{ vars.GCP_LOG_LEVEL }}
+     app_log_level: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ERROR' || 'INFO' }}
     secrets:
       gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
       gcp_service_account: ${{ secrets.GCP_SA_KEY }}
@@ -120,19 +120,7 @@ jobs:
             } 
       secrets:
         token: ${{ secrets.GITHUB_TOKEN }} 
-  
-  
-  dump_needs_context:
-    name: Dump Needs Context
-    needs: [set_env, firebase_deploy, gcp_deploy]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump Needs Context
-        run: |
-          echo "Firebase Deploy Result: ${{ needs.firebase_deploy.result }}"
-          echo "GCP Deploy Result: ${{ needs.gcp_deploy.result }}"
-          echo "Run Smoke Test: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}"
-  
+
   
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
@@ -146,6 +134,8 @@ jobs:
             {
                 "test_env": "${{ fromJson(needs.set_env.outputs.variables).target_env }}",
                 "test_type": "Smoke",
+                "fe_tag_name,": "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}",
+                "be_tag_name": "${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}",
                 "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
                 "cancel_running_test": ${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy) }}
             }
