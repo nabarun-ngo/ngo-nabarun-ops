@@ -20,7 +20,6 @@ on:
         default: 'stage'
         options:
           - stage
-          - prod
       test_type:
         required: true
         description: 'Test Type'
@@ -50,17 +49,6 @@ on:
         type: number
         default: 5
 
-# Environment variables for reuse across jobs
-env:
-  TEST_REPOSITORY: ''
-  TEST_CYCLE_FOLDER: ''
-  TEST_CASE_FOLDER: ''
-  QMETRY_PROJECT_ID: '10004'
-  JIRA_URL: ''
-  DOPPLER_PROJECT_NAME: ''
-  APP_UI_VERSION: 'latest'
-  APP_SERVER_VERSION: 'latest'
-
 jobs:
   set_env:
     name: 'Setup Environment'
@@ -75,7 +63,7 @@ jobs:
     if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' }}
     concurrency:
       group: smoke_test
-      cancel-in-progress: ${{ fromJson(needs.set_env.outputs.variables).cancel_running_test }}
+      cancel-in-progress: ${{ fromJson(needs.set_env.outputs.variables).cancel_running_test || false }}
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
     with:
       branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
