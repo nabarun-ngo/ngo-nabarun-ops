@@ -20,18 +20,13 @@ on:
           - staging
           - prod
         default: staging
-      project_id:
-        description: 'GCP Project ID'
-        required: true
-        type: string
-      # Download logs specific inputs
       log_filter:
-        description: 'Log filter query (e.g., textPayload:"your-uuid-here")'
+        description: 'Log filter'
         required: false
         type: string
         default: 'textPayload:"sample-filter"'
-      output_format:
-        description: 'Output format for logs'
+      log_output_format:
+        description: 'Log output format'
         required: false
         type: choice
         options:
@@ -39,80 +34,13 @@ on:
           - csv
           - html
           - json
-        default: txt
-      output_filename:
-        description: 'Custom filename (without extension, leave empty for auto-generated)'
-        required: false
-        type: string
-        default: ''
-      time_range:
-        description: 'Time range filter (e.g., timestamp>="2024-01-01T00:00:00Z")'
-        required: false
-        type: string
-        default: ''
-      limit:
-        description: 'Maximum number of log entries to retrieve'
-        required: false
-        type: string
-        default: '1000'
-      include_metadata:
-        description: 'Include metadata in output'
-        required: false
-        type: choice
-        options:
-          - 'true'
-          - 'false'
-        default: 'true'
-      # Restart App Engine specific inputs
+        default: 'txt'
       service_name:
-        description: 'App Engine service name'
+        description: 'App Engine Service Name'
         required: false
         type: string
         default: 'default'
-      version_id:
-        description: 'Specific version ID (leave empty for all versions)'
-        required: false
-        type: string
-        default: ''
-      confirm_restart:
-        description: 'DANGER: Type "yes" to confirm App Engine restart (deletes all instances!)'
-        required: false
-        type: string
-        default: 'no'
-      dry_run:
-        description: 'Perform dry run (no actual changes)'
-        required: false
-        type: choice
-        options:
-          - 'false'
-          - 'true'
-        default: 'false'
-      wait_timeout:
-        description: 'Wait timeout for instance recreation (seconds)'
-        required: false
-        type: string
-        default: '300'
-      # Cleanup GCP resources specific inputs
-      keep_gae_versions:
-        description: 'Number of GAE versions to keep'
-        required: false
-        type: string
-        default: '1'
-      gcs_keep_days:
-        description: 'Number of days to keep GCS files'
-        required: false
-        type: string
-        default: '5'
-      gcs_bucket_patterns:
-        description: 'GCS bucket patterns (comma-separated or "auto")'
-        required: false
-        type: string
-        default: 'auto'
-      cleanup_timeout_minutes:
-        description: 'Timeout for cleanup operations (minutes)'
-        required: false
-        type: string
-        default: '10'
+    
 
 jobs:
   gcp-operations:
@@ -121,23 +49,12 @@ jobs:
     with:
       operation: ${{ inputs.operation }}
       environment: ${{ inputs.environment }}
-      project_id: ${{ inputs.project_id }}
       log_filter: ${{ inputs.log_filter }}
-      output_format: ${{ inputs.output_format }}
-      output_filename: ${{ inputs.output_filename }}
-      time_range: ${{ inputs.time_range }}
-      limit: ${{ inputs.limit }}
-      include_metadata: ${{ inputs.include_metadata }}
+      output_format: ${{ inputs.log_output_format }}
       service_name: ${{ inputs.service_name }}
-      version_id: ${{ inputs.version_id }}
-      confirm_restart: ${{ inputs.confirm_restart }}
-      dry_run: ${{ inputs.dry_run }}
-      wait_timeout: ${{ inputs.wait_timeout }}
-      keep_gae_versions: ${{ inputs.keep_gae_versions }}
-      gcs_keep_days: ${{ inputs.gcs_keep_days }}
-      gcs_bucket_patterns: ${{ inputs.gcs_bucket_patterns }}
-      cleanup_timeout_minutes: ${{ inputs.cleanup_timeout_minutes }}
+      confirm_restart: 'yes'
     secrets:
+      project_id: ${{ secrets.GCP_PROJECT_ID }}
       gcp_sa_key: ${{ secrets.GCP_SA_KEY }}
 
   display-results:
@@ -157,7 +74,6 @@ jobs:
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| **Operation** | \`${{ inputs.operation }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Environment** | \`${{ inputs.environment }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Project ID** | \`${{ inputs.project_id }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Status** | ${{ needs.gcp-operations.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Timestamp** | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -168,40 +84,20 @@ jobs:
             echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
             echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| **Filter** | \`${{ inputs.log_filter }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Output Format** | \`${{ inputs.output_format }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Limit** | ${{ inputs.limit }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Include Metadata** | ${{ inputs.include_metadata }} |" >> $GITHUB_STEP_SUMMARY
-            if [ -n "${{ inputs.time_range }}" ]; then
-              echo "| **Time Range** | \`${{ inputs.time_range }}\` |" >> $GITHUB_STEP_SUMMARY
-            fi
+            echo "| **Output Format** | \`${{ inputs.log_output_format }}\` |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ inputs.operation }}" = "restart-app-engine" ]; then
             echo "## 🔁 Restart App Engine Details" >> $GITHUB_STEP_SUMMARY
             echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
             echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| **Service** | \`${{ inputs.service_name }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Version** | \`${{ inputs.version_id || 'All versions' }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Confirmation** | ${{ inputs.confirm_restart }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Dry Run** | ${{ inputs.dry_run }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Wait Timeout** | ${{ inputs.wait_timeout }}s |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             
-            # Add safety warning for restart operations
-            if [ "${{ inputs.confirm_restart }}" = "yes" ] && [ "${{ inputs.dry_run }}" = "false" ]; then
-              echo "### ⚠️ DANGER ZONE" >> $GITHUB_STEP_SUMMARY
-              echo "This operation **DELETED ALL RUNNING INSTANCES** for the specified App Engine service!" >> $GITHUB_STEP_SUMMARY
-              echo "New instances will be created automatically when traffic arrives." >> $GITHUB_STEP_SUMMARY
-              echo "" >> $GITHUB_STEP_SUMMARY
-            fi
           elif [ "${{ inputs.operation }}" = "cleanup-gcp-resources" ]; then
             echo "## 🗑️ Cleanup GCP Resources Details" >> $GITHUB_STEP_SUMMARY
             echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
             echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| **Service** | \`${{ inputs.service_name }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Keep GAE Versions** | ${{ inputs.keep_gae_versions }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| **GCS Keep Days** | ${{ inputs.gcs_keep_days }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| **GCS Bucket Patterns** | \`${{ inputs.gcs_bucket_patterns }}\` |" >> $GITHUB_STEP_SUMMARY
-            echo "| **Cleanup Timeout** | ${{ inputs.cleanup_timeout_minutes }} minutes |" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           
@@ -273,16 +169,11 @@ jobs:
               fi
             elif [ "${{ inputs.operation }}" = "restart-app-engine" ]; then
               echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
-              if [ "${{ inputs.dry_run }}" = "true" ]; then
-                echo "- This was a **dry run** - no actual changes were made" >> $GITHUB_STEP_SUMMARY
-                echo "- Review the planned actions and run again with dry_run=false if desired" >> $GITHUB_STEP_SUMMARY
-              else
-                echo "- Monitor your application for proper startup and functionality" >> $GITHUB_STEP_SUMMARY
-                echo "- New instances will be created automatically when traffic arrives" >> $GITHUB_STEP_SUMMARY
-                echo "- Check App Engine console for service health and instance status" >> $GITHUB_STEP_SUMMARY
-                if [ "${{ needs.gcp-operations.outputs.instances_recreated }}" = "0" ]; then
-                  echo "- **Note:** No instances currently running (normal for auto-scaled services)" >> $GITHUB_STEP_SUMMARY
-                fi
+              echo "- Monitor your application for proper startup and functionality" >> $GITHUB_STEP_SUMMARY
+              echo "- New instances will be created automatically when traffic arrives" >> $GITHUB_STEP_SUMMARY
+              echo "- Check App Engine console for service health and instance status" >> $GITHUB_STEP_SUMMARY
+              if [ "${{ needs.gcp-operations.outputs.instances_recreated }}" = "0" ]; then
+                echo "- **Note:** No instances currently running (normal for auto-scaled services)" >> $GITHUB_STEP_SUMMARY
               fi
             elif [ "${{ inputs.operation }}" = "cleanup-gcp-resources" ]; then
               echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
@@ -303,3 +194,4 @@ jobs:
             echo "4. Review the workflow logs for specific error messages" >> $GITHUB_STEP_SUMMARY
           fi
 
+  
