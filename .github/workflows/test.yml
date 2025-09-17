@@ -41,13 +41,13 @@ on:
       smoke_matrix:
         description: 'Number of Smoke Tests per Job'
         required: false
-        type: number
-        default: 2
+        type: string
+        default: '2'
       regression_matrix:
         description: 'Number of Regression Tests per Job'
         required: false
-        type: number
-        default: 5
+        type: string
+        default: '5'
 
 jobs:
   set_env:
@@ -58,7 +58,7 @@ jobs:
       client_payload: ${{ toJson(github.event.client_payload) }}
 
   run_automated_test_smoke:
-    name: 'Run Smoke Tests '
+    name: 'Run Smoke Tests'
     needs: set_env
     concurrency:
       group: smoke_test
@@ -68,7 +68,7 @@ jobs:
       branch_name: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}
       test_env: ${{ fromJson(needs.set_env.outputs.variables).test_env }}
       test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
-      max_tests_per_matrix: ${{ inputs.smoke_matrix || 5 }}
+      max_tests_per_matrix: ${{ inputs.smoke_matrix || 1 }}
       test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}
       test_doppler_project_name: 'nabarun_test'
       upload_result: true
@@ -85,32 +85,32 @@ jobs:
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
 
-  # run_automated_test_regression:
-  #   name: 'Run Regression Tests'
-  #   needs: set_env
-  #   if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Regression' }}
-  #   concurrency:
-  #     group: regression_test
-  #     cancel-in-progress: false
-  #   uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
-  #   with:
-  #     branch_name: 'stage'
-  #     test_env: 'stage'
-  #     test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
-  #     max_tests_per_matrix: ${{ inputs.smoke_matrix || 5 }}
-  #     test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
-  #     test_doppler_project_name: 'nabarun_test'
-  #     upload_result: true
-  #     app_ui_version: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
-  #     app_server_version:  ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
-  #     repository_name: 'nabarun-ngo/ngo-nabarun-test'
-  #     test_cycle_folder: ${{ vars.QMETRY_TEST_CYCLE_FOLDER_STAGE }}
-  #     test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
-  #     qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
-  #     jira_url: ${{ vars.JIRA_URL }}
+  run_automated_test_regression:
+    name: 'Run Regression Tests'
+    needs: set_env
+    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Regression' }}
+    concurrency:
+      group: regression_test
+      cancel-in-progress: false
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
+    with:
+      branch_name: 'stage'
+      test_env: 'stage'
+      test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
+      max_tests_per_matrix: ${{ inputs.regression_matrix || 5 }}
+      test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
+      test_doppler_project_name: 'nabarun_test'
+      upload_result: true
+      app_ui_version: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+      app_server_version:  ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
+      repository_name: 'nabarun-ngo/ngo-nabarun-test'
+      test_cycle_folder: ${{ vars.QMETRY_TEST_CYCLE_FOLDER_STAGE }}
+      test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
+      qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
+      jira_url: ${{ vars.JIRA_URL }}
 
 
-  #   secrets:
-  #     test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
-  #     qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
-  #     qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
+    secrets:
+      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
+      qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
+      qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
