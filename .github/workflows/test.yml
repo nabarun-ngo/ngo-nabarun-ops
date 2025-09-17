@@ -42,7 +42,7 @@ on:
         description: 'Number of Smoke Tests per Job'
         required: false
         type: string
-        default: '2'
+        default: '1'
       regression_matrix:
         description: 'Number of Regression Tests per Job'
         required: false
@@ -59,6 +59,7 @@ jobs:
 
   run_automated_test_smoke:
     name: 'Run Smoke Tests'
+    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' }}
     needs: set_env
     concurrency:
       group: smoke_test
