@@ -38,16 +38,6 @@ on:
         required: false
         type: string
         default: '@regression'
-      smoke_matrix:
-        description: 'Number of Smoke Tests per Job'
-        required: false
-        type: string
-        default: '1'
-      regression_matrix:
-        description: 'Number of Regression Tests per Job'
-        required: false
-        type: string
-        default: '5'
 
 jobs:
   set_env:
