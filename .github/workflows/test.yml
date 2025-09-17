@@ -60,7 +60,6 @@ jobs:
   run_automated_test_smoke:
     name: 'Run Smoke Tests '
     needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Smoke' }}
     concurrency:
       group: smoke_test
       cancel-in-progress: ${{ fromJson(needs.set_env.outputs.variables).cancel_running_test || false }}
