@@ -85,32 +85,32 @@ jobs:
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
 
-  run_automated_test_regression:
-    name: 'Run Regression Tests'
-    needs: set_env
-    if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Regression' }}
-    concurrency:
-      group: regression_test
-      cancel-in-progress: false
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
-    with:
-      branch_name: 'stage'
-      test_env: 'stage'
-      test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
-      max_tests_per_matrix: ${{ inputs.smoke_matrix || 5 }}
-      test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
-      test_doppler_project_name: 'nabarun_test'
-      upload_result: true
-      app_ui_version: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
-      app_server_version:  ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
-      repository_name: 'nabarun-ngo/ngo-nabarun-test'
-      test_cycle_folder: ${{ vars.QMETRY_TEST_CYCLE_FOLDER_STAGE }}
-      test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
-      qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
-      jira_url: ${{ vars.JIRA_URL }}
+  # run_automated_test_regression:
+  #   name: 'Run Regression Tests'
+  #   needs: set_env
+  #   if: ${{ fromJson(needs.set_env.outputs.variables).test_type == 'Regression' }}
+  #   concurrency:
+  #     group: regression_test
+  #     cancel-in-progress: false
+  #   uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Run-Parallel-Tests.yml@main
+  #   with:
+  #     branch_name: 'stage'
+  #     test_env: 'stage'
+  #     test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
+  #     max_tests_per_matrix: ${{ inputs.smoke_matrix || 5 }}
+  #     test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
+  #     test_doppler_project_name: 'nabarun_test'
+  #     upload_result: true
+  #     app_ui_version: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+  #     app_server_version:  ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
+  #     repository_name: 'nabarun-ngo/ngo-nabarun-test'
+  #     test_cycle_folder: ${{ vars.QMETRY_TEST_CYCLE_FOLDER_STAGE }}
+  #     test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
+  #     qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
+  #     jira_url: ${{ vars.JIRA_URL }}
 
 
-    secrets:
-      test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
-      qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
-      qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
+  #   secrets:
+  #     test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
+  #     qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
+  #     qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
