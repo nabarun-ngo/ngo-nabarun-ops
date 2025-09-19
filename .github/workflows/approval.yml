@@ -1,0 +1,16 @@
+name: Auto Approval Check
+
+on:
+  deployment_status:
+  
+jobs:
+  on_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto Approve Deployment
+        if: github.event.deployment_status.state == 'waiting'
+        uses: ambilykk/deployment-auto-approve@main
+        with:
+         GITHUB_TOKEN: ${{ secrets.PAT }}   
+         environment: ${{ github.event.deployment.environment }}
+       

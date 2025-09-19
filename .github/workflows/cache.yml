@@ -1,6 +1,8 @@
 name: '[Util] Redis Operations Manager'
 
 on:
+  schedule:
+   - cron: '0 */6 * * *' 
   workflow_dispatch:
     inputs:
       operation:
@@ -16,14 +18,16 @@ on:
         required: true
         type: choice
         options:
-          - staging
+          - stage
           - prod
-        default: staging
+        default: stage
       key:
         description: 'Specific Redis key to delete (leave empty to delete all keys - USE WITH CAUTION!)'
         required: false
         type: string
         default: ''
+
+
 
 jobs:
   redis-operations:
