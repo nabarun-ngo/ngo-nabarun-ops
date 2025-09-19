@@ -18,9 +18,9 @@ on:
         required: true
         type: choice
         options:
-          - staging
+          - stage
           - prod
-        default: staging
+        default: stage
       key:
         description: 'Specific Redis key to delete (leave empty to delete all keys - USE WITH CAUTION!)'
         required: false
