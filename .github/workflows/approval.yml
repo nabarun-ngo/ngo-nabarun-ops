@@ -2,6 +2,7 @@ name: successful deployment
 
 on:
   deployment_status:
+   types: [waiting]
 
 jobs:
   on_deploy_success:
