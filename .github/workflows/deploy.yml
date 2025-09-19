@@ -143,11 +143,139 @@ jobs:
             {
                 "test_env": "${{ fromJson(needs.set_env.outputs.variables).target_env }}",
                 "test_type": "Smoke",
-                "fe_tag_name,": "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}",
+                "fe_tag_name": "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}",
                 "be_tag_name": "${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}",
                 "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
                 "cancel_running_test": ${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy) }}
             }
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
+
+  deployment_summary:
+    name: '📊 Deployment Summary'
+    runs-on: ubuntu-latest
+    needs: [set_env, firebase_deploy, gcp_deploy, sync_data, trigger_smoke_test]
+    if: always()
+    steps:
+      - name: 📋 Generate Deployment Report
+        id: summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Target Environment: ${{ fromJson(needs.set_env.outputs.variables).target_env }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Versions" >> $GITHUB_STEP_SUMMARY
+          echo "- 🖥️ Frontend: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔧 Backend: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🚀 Deployment Status" >> $GITHUB_STEP_SUMMARY
+          
+          # Frontend status
+          if [[ "${{ fromJson(needs.set_env.outputs.variables).fe_deploy }}" == "true" ]]; then
+            if [[ "${{ needs.firebase_deploy.result }}" == "success" ]]; then
+              echo "- ✅ **Firebase Frontend**: Successfully deployed ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}" >> $GITHUB_STEP_SUMMARY
+            elif [[ "${{ needs.firebase_deploy.result }}" == "skipped" ]]; then
+              echo "- ⏭️ **Firebase Frontend**: Deployment skipped" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ **Firebase Frontend**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⏭️ **Firebase Frontend**: Not selected for deployment" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Backend status
+          if [[ "${{ fromJson(needs.set_env.outputs.variables).be_deploy }}" == "true" ]]; then
+            if [[ "${{ needs.gcp_deploy.result }}" == "success" ]]; then
+              echo "- ✅ **GCP Backend**: Successfully deployed ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }} with log level ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ERROR' || fromJson(needs.set_env.outputs.variables).log_level || 'WARN' }}" >> $GITHUB_STEP_SUMMARY
+            elif [[ "${{ needs.gcp_deploy.result }}" == "skipped" ]]; then
+              echo "- ⏭️ **GCP Backend**: Deployment skipped" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ **GCP Backend**: Deployment failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⏭️ **GCP Backend**: Not selected for deployment" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Data sync status
+          if [[ "${{ fromJson(needs.set_env.outputs.variables).auth0_sync || fromJson(needs.set_env.outputs.variables).target_env == 'prod' }}" == "true" ]]; then
+            if [[ "${{ needs.sync_data.result }}" == "success" ]]; then
+              echo "- ✅ **Data Sync**: Successfully synchronized data" >> $GITHUB_STEP_SUMMARY
+              echo "  - Auth0: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'STAGE to PROD' || 'DEV to STAGE' }}" >> $GITHUB_STEP_SUMMARY
+              if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
+                echo "  - Firebase: STAGE to PROD" >> $GITHUB_STEP_SUMMARY
+              fi
+            elif [[ "${{ needs.sync_data.result }}" == "skipped" ]]; then
+              echo "- ⏭️ **Data Sync**: Synchronization skipped" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ **Data Sync**: Synchronization failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⏭️ **Data Sync**: Not selected for synchronization" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Smoke Test status
+          if [[ "${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}" == "true" ]]; then
+            if [[ "${{ needs.trigger_smoke_test.result }}" == "success" ]]; then
+              echo "- ✅ **Smoke Test**: Successfully triggered" >> $GITHUB_STEP_SUMMARY
+              echo "  - Test Environment: ${{ fromJson(needs.set_env.outputs.variables).target_env }}" >> $GITHUB_STEP_SUMMARY
+              echo "  - Test Tags: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}" >> $GITHUB_STEP_SUMMARY
+            elif [[ "${{ needs.trigger_smoke_test.result }}" == "skipped" ]]; then
+              echo "- ⏭️ **Smoke Test**: Test trigger skipped" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ **Smoke Test**: Failed to trigger tests" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⏭️ **Smoke Test**: Not selected for execution" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Execution URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **This Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Add URLs for successful deployments
+          if [[ "${{ fromJson(needs.set_env.outputs.variables).fe_deploy }}" == "true" && "${{ needs.firebase_deploy.result }}" == "success" ]]; then
+            if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
+              echo "- **Frontend Application**: https://ngo-nabarun.web.app" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Frontend Application**: https://staging-ngo-nabarun.web.app" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          if [[ "${{ fromJson(needs.set_env.outputs.variables).be_deploy }}" == "true" && "${{ needs.gcp_deploy.result }}" == "success" ]]; then
+            if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
+              echo "- **Backend API**: https://api-ngo-nabarun.appspot.com" >> $GITHUB_STEP_SUMMARY
+              echo "- **API Health Check**: https://api-ngo-nabarun.appspot.com/actuator/health" >> $GITHUB_STEP_SUMMARY
+              echo "- **GCP App Engine Console**: https://console.cloud.google.com/appengine/services?project=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Backend API**: https://staging-api-ngo-nabarun.appspot.com" >> $GITHUB_STEP_SUMMARY
+              echo "- **API Health Check**: https://staging-api-ngo-nabarun.appspot.com/actuator/health" >> $GITHUB_STEP_SUMMARY
+              echo "- **GCP App Engine Console**: https://console.cloud.google.com/appengine/services?project=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Add triggered test workflow URL if smoke test was triggered
+          if [[ "${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}" == "true" && "${{ needs.trigger_smoke_test.result }}" == "success" ]]; then
+            if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
+              echo "- **Smoke Test Workflow**: https://github.com/nabarun-ngo/ngo-nabarun-prodops/actions" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- **Smoke Test Workflow**: https://github.com/${{ github.repository }}/actions" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📝 Deployment Notes" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall status determination
+          if [[ ("${{ fromJson(needs.set_env.outputs.variables).fe_deploy }}" == "true" && "${{ needs.firebase_deploy.result }}" != "success") || 
+                ("${{ fromJson(needs.set_env.outputs.variables).be_deploy }}" == "true" && "${{ needs.gcp_deploy.result }}" != "success") || 
+                ("${{ fromJson(needs.set_env.outputs.variables).auth0_sync || fromJson(needs.set_env.outputs.variables).target_env == 'prod' }}" == "true" && "${{ needs.sync_data.result }}" != "success") || 
+                ("${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}" == "true" && "${{ needs.trigger_smoke_test.result }}" != "success") ]]; then
+            echo "\n❗ **Warning**: One or more deployment steps failed or were skipped. Review logs for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "\n✅ **Success**: All selected deployment operations completed successfully." >> $GITHUB_STEP_SUMMARY
+          fi
               
