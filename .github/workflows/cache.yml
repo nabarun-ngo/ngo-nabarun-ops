@@ -1,6 +1,8 @@
 name: '[Util] Redis Operations Manager'
 
 on:
+  schedule:
+   - cron: '0 */6 * * *' 
   workflow_dispatch:
     inputs:
       operation:
@@ -8,7 +10,6 @@ on:
         required: true
         type: choice
         options:
-          - ping
           - view-keys
           - delete-keys
         default: view-keys
@@ -25,6 +26,8 @@ on:
         required: false
         type: string
         default: ''
+
+
 
 jobs:
   redis-operations:
