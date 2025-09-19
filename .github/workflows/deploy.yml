@@ -200,15 +200,15 @@ jobs:
           # Data sync status
           if [[ "${{ fromJson(needs.set_env.outputs.variables).auth0_sync || fromJson(needs.set_env.outputs.variables).target_env == 'prod' }}" == "true" ]]; then
             if [[ "${{ needs.sync_data.result }}" == "success" ]]; then
-              echo "- ✅ **Data Sync**: Successfully synchronized data" >> $GITHUB_STEP_SUMMARY
+              echo "- ✅ **Data Sync**: Successfully triggered data synchronization" >> $GITHUB_STEP_SUMMARY
               echo "  - Auth0: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'STAGE to PROD' || 'DEV to STAGE' }}" >> $GITHUB_STEP_SUMMARY
               if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
                 echo "  - Firebase: STAGE to PROD" >> $GITHUB_STEP_SUMMARY
               fi
             elif [[ "${{ needs.sync_data.result }}" == "skipped" ]]; then
-              echo "- ⏭️ **Data Sync**: Synchronization skipped" >> $GITHUB_STEP_SUMMARY
+              echo "- ⏭️ **Data Sync**: Synchronization trigger skipped" >> $GITHUB_STEP_SUMMARY
             else
-              echo "- ❌ **Data Sync**: Synchronization failed" >> $GITHUB_STEP_SUMMARY
+              echo "- ❌ **Data Sync**: Synchronization trigger failed" >> $GITHUB_STEP_SUMMARY
             fi
           else
             echo "- ⏭️ **Data Sync**: Not selected for synchronization" >> $GITHUB_STEP_SUMMARY
@@ -227,40 +227,6 @@ jobs:
             fi
           else
             echo "- ⏭️ **Smoke Test**: Not selected for execution" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔗 Execution URLs" >> $GITHUB_STEP_SUMMARY
-          echo "- **This Workflow Run**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
-          
-          # Add URLs for successful deployments
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).fe_deploy }}" == "true" && "${{ needs.firebase_deploy.result }}" == "success" ]]; then
-            if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
-              echo "- **Frontend Application**: https://ngo-nabarun.web.app" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- **Frontend Application**: https://staging-ngo-nabarun.web.app" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-          
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).be_deploy }}" == "true" && "${{ needs.gcp_deploy.result }}" == "success" ]]; then
-            if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
-              echo "- **Backend API**: https://api-ngo-nabarun.appspot.com" >> $GITHUB_STEP_SUMMARY
-              echo "- **API Health Check**: https://api-ngo-nabarun.appspot.com/actuator/health" >> $GITHUB_STEP_SUMMARY
-              echo "- **GCP App Engine Console**: https://console.cloud.google.com/appengine/services?project=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- **Backend API**: https://staging-api-ngo-nabarun.appspot.com" >> $GITHUB_STEP_SUMMARY
-              echo "- **API Health Check**: https://staging-api-ngo-nabarun.appspot.com/actuator/health" >> $GITHUB_STEP_SUMMARY
-              echo "- **GCP App Engine Console**: https://console.cloud.google.com/appengine/services?project=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-          
-          # Add triggered test workflow URL if smoke test was triggered
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).run_smoke_test }}" == "true" && "${{ needs.trigger_smoke_test.result }}" == "success" ]]; then
-            if [[ "${{ fromJson(needs.set_env.outputs.variables).target_env }}" == "prod" ]]; then
-              echo "- **Smoke Test Workflow**: https://github.com/nabarun-ngo/ngo-nabarun-prodops/actions" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- **Smoke Test Workflow**: https://github.com/${{ github.repository }}/actions" >> $GITHUB_STEP_SUMMARY
-            fi
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
