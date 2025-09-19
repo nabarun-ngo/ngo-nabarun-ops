@@ -1,0 +1,13 @@
+name: successful deployment
+
+on:
+  deployment_status:
+   types : [requested]
+
+jobs:
+  on_deploy_success:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify on successful deployment
+        run: echo "Deployment to ${{ github.event.deployment.environment }} was successful!"
+      # Add further steps like sending notifications, running post-deployment tests, etc.
