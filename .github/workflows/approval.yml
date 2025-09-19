@@ -1,13 +1,16 @@
-name: successful deployment
+name: Auto Approval Check
 
 on:
   deployment_status:
-   types: [waiting]
-
+  
 jobs:
-  on_deploy_success:
+  on_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify on successful deployment
-        run: echo "Deployment to ${{ github.event.deployment.environment }} ${{ github.event.deployment_status.state }} was successful!"
-      # Add further steps like sending notifications, running post-deployment tests, etc.
+      - name: Auto Approve Deployment
+        if: github.event.deployment_status.state == 'waiting'
+        uses: ambilykk/deployment-auto-approve@main
+        with:
+         GITHUB_TOKEN: ${{ secrets.PAT }}   
+         environment: ${{ github.event.deployment.environment }}
+       
