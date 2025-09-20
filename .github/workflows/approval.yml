@@ -38,7 +38,7 @@ jobs:
       - name: Get environment reviewers (users + teams)
         id: reviewers
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT }}
           REPO: ${{ github.repository }}
         run: |
           env_json=$(gh api repos/$REPO/environments/${{ steps.vars.outputs.env_name }})
