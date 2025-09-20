@@ -3,14 +3,100 @@ name: Auto Approval Check
 on:
   deployment_status:
   
-jobs:
-  on_deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Auto Approve Deployment
-        if: github.event.deployment_status.state == 'waiting'
-        uses: ambilykk/deployment-auto-approve@main
-        with:
-         GITHUB_TOKEN: ${{ secrets.PAT }}   
-         environment: ${{ github.event.deployment.environment }}
+#jobs:
+#  on_deploy:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Auto Approve Deployment
+#        if: github.event.deployment_status.state == 'waiting'
+#        uses: ambilykk/deployment-auto-approve@main
+#        with:
+#         GITHUB_TOKEN: ${{ secrets.PAT }}   
+#         environment: ${{ github.event.deployment.environment }}
        
+
+#on:
+#  deployment:
+#    types: [created]
+
+jobs:
+  auto-approve:
+    if: github.event.deployment_status.state == 'waiting'
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+      actions: write
+      contents: read
+
+    steps:
+      - name: Extract environment & actor
+        id: vars
+        run: |
+          echo "env_name=${{ github.event.deployment.environment }}" >> $GITHUB_OUTPUT
+          echo "actor=${{ github.actor }}" >> $GITHUB_OUTPUT
+
+      - name: Get environment reviewers (users + teams)
+        id: reviewers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          env_json=$(gh api repos/$REPO/environments/${{ steps.vars.outputs.env_name }})
+          
+          # Individual user reviewers
+          users=$(echo "$env_json" | jq -r '.reviewers[] | select(.type=="User") | .reviewer.login')
+          
+          # Team reviewers
+          teams=$(echo "$env_json" | jq -r '.reviewers[] | select(.type=="Team") | .reviewer.slug')
+          
+          members=""
+          for team in $teams; do
+            team_members=$(gh api repos/$REPO/teams/$team/members --jq '.[].login' || true)
+            members="$members $team_members"
+          done
+          
+          all_reviewers="$users $members"
+          
+          echo "reviewers=$all_reviewers" >> $GITHUB_OUTPUT
+          echo "Allowed reviewers: $all_reviewers"
+
+      - name: Check if actor is in reviewer list
+        id: check
+        run: |
+          actor="${{ steps.vars.outputs.actor }}"
+          reviewers="${{ steps.reviewers.outputs.reviewers }}"
+          
+          echo "Deployment actor: $actor"
+          if echo "$reviewers" | grep -qw "$actor"; then
+            echo "is_approved=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_approved=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Approve deployment
+        if: steps.check.outputs.is_approved == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "Approving workflow run $RUN_ID for $REPO"
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            repos/$REPO/actions/runs/$RUN_ID/approve
+
+      - name: Add job summary
+        run: |
+          echo "## Deployment Auto-Approval Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ steps.vars.outputs.env_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Actor:** ${{ steps.vars.outputs.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Allowed Reviewers:** ${{ steps.reviewers.outputs.reviewers }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ steps.check.outputs.is_approved }}" == "true" ]]; then
+            echo "✅ Deployment was auto-approved." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Deployment was NOT auto-approved (actor not in reviewers list)." >> $GITHUB_STEP_SUMMARY
+          fi
