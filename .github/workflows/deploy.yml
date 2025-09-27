@@ -137,7 +137,7 @@ jobs:
     needs: [set_env,firebase_deploy,gcp_deploy]
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
     with:
-        repository: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'nabarun-ngo/ngo-nabarun-prodops' || 'nabarun-ngo/ngo-nabarun-ops' }}
+        repository: 'nabarun-ngo/ngo-nabarun-ops'
         event_type: Trigger-Smoke-Test
         input_json: |-
             {
