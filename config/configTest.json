@@ -1,0 +1,26 @@
+{
+  "0 1 * * *": {
+    "environment": "staging",
+    "test_suite": "nightly",
+    "tags": "@smoke,@regression", 
+    "max_scenarios_per_job": 10,
+    "retry_count": 2,
+    "parallel_jobs": 5
+  },
+  "0 6 * * 1": {
+    "environment": "staging",
+    "test_suite": "integration",
+    "tags": "@integration",
+    "max_scenarios_per_job": 5,
+    "retry_count": 3,
+    "parallel_jobs": 3
+  },
+  "0 12 * * 5": {
+    "environment": "prod",
+    "test_suite": "performance", 
+    "tags": "@performance",
+    "max_scenarios_per_job": 2,
+    "retry_count": 1,
+    "parallel_jobs": 2
+  }
+}
