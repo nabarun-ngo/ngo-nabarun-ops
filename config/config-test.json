@@ -5,5 +5,12 @@
     "test_filter_tag_smoke": "@smoke", 
     "test_filter_tag_regression": "@regression",
     "cancel_running_test":true
+  },
+  "30 18 * * 5":{
+    "test_env": "stage",
+    "test_type": "Regression",
+    "test_filter_tag_smoke": "@smoke", 
+    "test_filter_tag_regression": "@regression",
+    "cancel_running_test":true
   }
 }
