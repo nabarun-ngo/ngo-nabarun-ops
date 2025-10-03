@@ -92,8 +92,8 @@ jobs:
       test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
       test_doppler_project_name: 'nabarun_test'
       upload_result: true
-      app_ui_version: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
-      app_server_version:  ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
+      app_ui_version: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name || 'NA'}}
+      app_server_version:  ${{ fromJson(needs.set_env.outputs.variables).be_tag_name || 'NA' }}
       repository_name: 'nabarun-ngo/ngo-nabarun-test'
       test_cycle_folder: ${{ vars.QMETRY_TEST_CYCLE_FOLDER_STAGE }}
       test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
