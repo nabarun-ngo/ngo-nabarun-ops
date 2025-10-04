@@ -10,7 +10,7 @@ on:
       
   schedule:
     - cron: '30 18 * * 5' ## 12 AM IST
-    - cron: '30 23 * * *' ## 5AM IST
+    - cron: '30 3 * * *' ## 5AM IST
     
   workflow_dispatch:
     inputs:
