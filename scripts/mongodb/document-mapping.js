@@ -37,7 +37,13 @@ while (doc_ref.hasNext()) {
 
 	}
 }
-db.document_mappings.insertMany(doc_map);
+if(doc_map.length > 0){
+	print("Inserting "+doc_map.length+" document mappings ...")
+	db.document_mappings.insertMany(doc_map);
+}else{
+	print("Nothing found for document mapping ...")
+}
+
 
 function createMapping(docId, refId, docType, createdOn) {
     return {
