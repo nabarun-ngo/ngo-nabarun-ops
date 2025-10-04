@@ -1,0 +1,71 @@
+name: '[Util] MongoDB Data Operations'
+on:
+  workflow_dispatch:
+    inputs:
+     script-path:
+        description: "Relative path to the MongoDB script (.js)"
+        required: false
+        default: './scripts/mongodb/  .js'
+        type: string
+     import-file:
+        description: "Path to JSON file to import"
+        required: false
+        default: './data/mongodb/  .json'
+        type: string
+     import-collection:
+        description: "Target collection for import"
+        required: false
+        default: ''
+        type: string
+     target_env:
+        description: 'Target Environment'  
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
+
+jobs:
+  set_env:
+    name: 'Setup Inputs'
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Setup-Env.yml@main
+    with:
+      inputs: ${{ toJson(inputs) }}
+      client_payload: ${{ toJson(github.event.client_payload) }}
+
+  mongo_data:
+    name: 'Mongo Data Ops'
+    needs: set_env
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/mongo-cloud.yml@main
+    with:
+      target-env: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
+      script-path: ${{ fromJson(needs.set_env.outputs.variables).script-path }}
+      import-file: ${{ fromJson(needs.set_env.outputs.variables).import-file }}
+      import-collection: ${{ fromJson(needs.set_env.outputs.variables).import-collection }}
+    secrets:
+      mongo-uri: ${{ secrets.APP_MONGODB_URI }}
+
+
+  sync_summary:
+    name: '📊 Operation Logs'
+    runs-on: ubuntu-latest
+    needs: [set_env, mongo_data]
+    if: always()
+    steps:
+      - name: 📋 Generate Report
+        id: summary
+        run: |
+          echo "## 🔄 Operation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ MongoDB Script Execution Log" >> $GITHUB_STEP_SUMMARY
+          echo "${{ needs.mongo_data.script-logs }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ MongoDB Data Import Log" >> $GITHUB_STEP_SUMMARY
+          echo "${{ needs.mongo_data.import-logs }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+         
+          echo "### 📝 Operation Notes" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+  
