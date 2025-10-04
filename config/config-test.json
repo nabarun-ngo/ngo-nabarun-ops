@@ -1,5 +1,5 @@
 {
-  "*/5 * * * *": {
+  "30 3 * * *": {
     "test_env": "stage",
     "test_type": "Smoke",
     "test_filter_tag_smoke": "@smoke", 
