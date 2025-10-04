@@ -20,7 +20,7 @@ while (doc_ref.hasNext()) {
 
 			if (document.documentType === "DONATION") {
 				let donation = db.donations.findOne({ _id: document.documentRefId });
-				if (donation != null) {
+				if (donation != null && donation.transactionRefNumber != null) {
 					print("Creating index for " + document._id + " with " + donation.transactionRefNumber+" - TRANSACTION");
 					doc_map.push(createMapping(document._id, donation.transactionRefNumber, "TRANSACTION", document.createdOn));
 				}
@@ -28,7 +28,7 @@ while (doc_ref.hasNext()) {
 
 			if (document.documentType == "EXPENSE") {
 				let expense = db.expenses.findOne({ _id: document.documentRefId });
-				if (expense != null) {
+				if (expense != null && expense.transactionRefNumber != null) {
 					doc_map.push(createMapping(document._id, expense.transactionRefNumber, "EXPENSE", document.createdOn));
 				}
 			}
