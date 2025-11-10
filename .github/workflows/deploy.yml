@@ -31,6 +31,11 @@ on:
        required: true
        type: boolean
        default: false
+     be_deploy_v2:
+       description: 'Deploy Backend (NestJS)'
+       required: true
+       type: boolean
+       default: false
      be_tag_name:
        required: true
        description: 'Tag to deploy (Backend)'
@@ -108,6 +113,27 @@ jobs:
       gcp_service_account: ${{ secrets.GCP_SA_KEY }}
       app_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND }}
       repo_token: ${{ secrets.PAT }}
+
+  gcp_cr_deploy:
+    if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy_v2 }}
+    needs: set_env
+    name: Deploy to GCP Cloud Run
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP-CloudRun.yml@main
+    with:
+     tag_name: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
+     repo_name: 'ngo-nabarun-be-nestjs'
+     repo_owner_name: 'nabarun-ngo'
+     environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod' || 'stage' }}
+     service_name: 'nabarun-be-nest'
+     doppler_project: 'nabarun_backend' 
+     doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod_nest' || 'stage_nest' }}
+     enable_health_check: false
+     health_check_path: '/health'
+    secrets:
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      DOPPLER_TOKEN : ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND_NEST }}
+      REPO_TOKEN: ${{ secrets.PAT }}
 
   sync_data:
       # always Running this data sync for prod deployment
