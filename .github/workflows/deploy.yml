@@ -131,7 +131,7 @@ jobs:
      health_check_path: '/health'
     secrets:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY_CR }}
       DOPPLER_TOKEN : ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND_NEST }}
       REPO_TOKEN: ${{ secrets.PAT }}
 
