@@ -134,6 +134,9 @@ jobs:
       GCP_SA_KEY: ${{ secrets.GCP_SA_KEY_CR }}
       DOPPLER_TOKEN : ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND_NEST }}
       REPO_TOKEN: ${{ secrets.PAT }}
+      DOCKER_USER: ${{ secrets.DOCKER_USER }}
+      DOCKER_TOKEN: ${{ secrets.DOCKER_APIKEY }}
+
 
   sync_data:
       # always Running this data sync for prod deployment
