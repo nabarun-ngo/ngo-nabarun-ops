@@ -126,6 +126,7 @@ jobs:
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod' || 'stage' }}
      service_name: 'nabarun-be-nest'
      doppler_project: 'nabarun_backend' 
+     image_name: 'ngonabarun/nabarun-be'
      doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod_nest' || 'stage_nest' }}
      enable_health_check: false
      health_check_path: '/health'
