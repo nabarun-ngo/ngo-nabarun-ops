@@ -89,6 +89,7 @@ jobs:
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
      npm_run_command: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm ci --legacy-peer-deps && npm run build' || 'npm ci --legacy-peer-deps && npm run build:stage' }}
+     target_site: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ngonabarun-portal' || 'ngonabarun-portal-stage' }}
     secrets:
       firebase_project_id: ${{ secrets.FB_PROJECT_ID }}
       firebase_service_account: ${{ secrets.FB_SA_KEY }}
