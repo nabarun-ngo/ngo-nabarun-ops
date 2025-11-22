@@ -13,11 +13,17 @@ on:
       - Trigger-Deploy-Sync-Test
       - Trigger-DeployFE-Sync-Test
       - Trigger-DeployBE-Sync-Test
+      - Trigger-DeployPublicFE
 
   workflow_dispatch:
     inputs:
      fe_deploy:
        description: 'Deploy Frontend (Angular)'
+       required: true
+       type: boolean
+       default: false
+     fe_deploy_public:
+       description: 'Deploy Public Frontend (NextJS)'
        required: true
        type: boolean
        default: false
@@ -94,6 +100,27 @@ jobs:
       firebase_project_id: ${{ secrets.FB_PROJECT_ID }}
       firebase_service_account: ${{ secrets.FB_SA_KEY }}
       repo_token: ${{ secrets.PAT }}
+
+  firebase_deploy_public:
+    if: ${{ fromJson(needs.set_env.outputs.variables).fe_deploy_public }}
+    needs: set_env
+    name: Deploy to Firebase (Public Site)
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-Firebase.yml@main
+    with:
+     tag_name: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+     repo_name: 'ngo-nabarun-fe'
+     repo_owner_name: 'nabarun-ngo'
+     environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
+     npm_run_command: 'npm install && npm run build'
+     target_site: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ngonabarun' || 'ngonabarun-stage' }}
+     use_doppler: true
+     doppler_project: 'nabarun_backend'
+     doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod_nest' || 'stage_nest' }}
+    secrets:
+      firebase_project_id: ${{ secrets.FB_PROJECT_ID }}
+      firebase_service_account: ${{ secrets.FB_SA_KEY }}
+      repo_token: ${{ secrets.PAT }}
+      doppler_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND_NEST }}
   
   gcp_deploy:
     if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy }}
