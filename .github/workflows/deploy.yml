@@ -108,7 +108,7 @@ jobs:
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-Firebase.yml@main
     with:
      tag_name: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
-     repo_name: 'ngo-nabarun-fe'
+     repo_name: 'ngo-nabarun-public'
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
      npm_run_command: 'npm install && npm run build'
