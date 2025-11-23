@@ -82,7 +82,7 @@ jobs:
       inputs: ${{ toJson(inputs) }}
       client_payload: ${{ toJson(github.event.client_payload) }}
       #script_path: scripts/set_latest_tag.sh
-      resolve_variables: 'fe_tag_name,be_tag_name'
+      #resolve_variables: 'fe_tag_name,be_tag_name'
      
   firebase_deploy:
     if: ${{ fromJson(needs.set_env.outputs.variables).fe_deploy }}
