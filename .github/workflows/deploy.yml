@@ -31,7 +31,7 @@ on:
        required: true
        description: 'Tag to deploy (Frontend)'
        type: string
-       default: 'latest'
+       default: ''
      be_deploy:
        description: 'Deploy Backend (Spring Boot)'
        required: true
@@ -46,7 +46,7 @@ on:
        required: true
        description: 'Tag to deploy (Backend)'
        type: string
-       default: 'latest'
+       default: ''
      target_env:
        required: true
        description: 'Target Environment'
