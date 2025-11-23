@@ -114,6 +114,7 @@ jobs:
      npm_run_command: 'npm install && npm run build'
      target_site: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ngonabarun' || 'ngonabarun-stage' }}
      use_doppler: true
+     build_output_dir: 'out'
      doppler_project: 'nabarun_backend'
      doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod_nest' || 'stage_nest' }}
     secrets:
@@ -156,7 +157,7 @@ jobs:
      doppler_project: 'nabarun_backend' 
      image_name: 'ngonabarun/nabarun-be'
      doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod_nest' || 'stage_nest' }}
-     enable_health_check: false
+     enable_health_check: true
      health_check_path: '/health'
     secrets:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
