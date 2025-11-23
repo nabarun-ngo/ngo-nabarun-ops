@@ -103,6 +103,7 @@ jobs:
 
   redis_delete:
     name: 'Clean Redis Cache'
+    if: ${{ fromJson(needs.set_env.outputs.variables).fe_deploy_public }}
     needs: set_env
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Redis-Ops.yml@main
     with:
