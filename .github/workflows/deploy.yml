@@ -1,4 +1,4 @@
-name: '[Deploy] Deploy, Sync and Test Applications'
+name: '[Deploy] Deploy Applications'
 run-name: >
   ${{ format('{0}Deploying to {1} — FE:{2} BE:{3}',
     github.event.client_payload.pr_number && format('PR #{0} ', github.event.client_payload.pr_number) || '',
@@ -204,30 +204,29 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }} 
 
   
-  trigger_smoke_test:
-    name: 'Trigger Smoke Test'
-    if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (needs.gcp_cr_deploy.result == 'success' || needs.firebase_deploy.result == 'success' || needs.gcp_deploy.result == 'success') && always() }}
-    needs: [firebase_deploy,gcp_deploy,gcp_cr_deploy]
-    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
-    with:
-        repository: 'nabarun-ngo/ngo-nabarun-ops'
-        event_type: Trigger-Smoke-Test
-        input_json: |-
-            {
-                "test_env": "${{ fromJson(needs.set_env.outputs.variables).target_env }}",
-                "test_type": "Smoke",
-                "fe_tag_name": "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}",
-                "be_tag_name": "${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}",
-                "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
-                "cancel_running_test": true
-            }
-    secrets:
-        token: ${{ secrets.GITHUB_TOKEN }}
+  # trigger_smoke_test:
+  #   name: 'Trigger Smoke Test'
+  #   if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (needs.gcp_cr_deploy.result == 'success' || needs.firebase_deploy.result == 'success' ) && always() }}
+  #   needs: [firebase_deploy,gcp_cr_deploy]
+  #   uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
+  #   with:
+  #       repository: 'nabarun-ngo/ngo-nabarun-ops'
+  #       event_type: Trigger-Smoke-Test
+  #       input_json: |-
+  #           {
+  #               "test_env": "${{ fromJson(needs.set_env.outputs.variables).target_env }}",
+  #               "test_type": "Smoke",
+  #               "fe_tag_name": "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}",
+  #               "be_tag_name": "${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}",
+  #               "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
+  #               "cancel_running_test": true
+  #           }
+  #   secrets:
+  #       token: ${{ secrets.GITHUB_TOKEN }}
                
                 
                 
   #${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy) }}
-
   # deployment_summary:
   #   name: '📊 Deployment Summary'
   #   runs-on: ubuntu-latest
