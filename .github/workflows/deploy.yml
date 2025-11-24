@@ -206,7 +206,7 @@ jobs:
   
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
-    if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (needs.firebase_deploy.result == 'success' || needs.gcp_deploy.result == 'success') && always() }}
+    if: ${{ fromJson(needs.set_env.outputs.variables).run_smoke_test && (needs.gcp_cr_deploy.result == 'success' || needs.firebase_deploy.result == 'success' || needs.gcp_deploy.result == 'success') && always() }}
     needs: [firebase_deploy,gcp_deploy,gcp_cr_deploy]
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
     with:
@@ -219,10 +219,14 @@ jobs:
                 "fe_tag_name": "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}",
                 "be_tag_name": "${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}",
                 "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
-                "cancel_running_test": ${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy) }}
+                "cancel_running_test": true
             }
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
+               
+                
+                
+  #${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy) }}
 
   # deployment_summary:
   #   name: '📊 Deployment Summary'
