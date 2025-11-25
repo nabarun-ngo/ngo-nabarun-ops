@@ -11,6 +11,7 @@ on:
           - download-logs
           - restart-app-engine
           - cleanup-gcp-resources
+          - restart-gcr
         default: download-logs
       environment:
         description: 'Environment to operate on'
