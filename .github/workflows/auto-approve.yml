@@ -1,0 +1,80 @@
+name: Auto-Approve for Admins
+
+on:
+  workflow_run:
+    workflows: ["Your Deploy Workflow"]  # Name of your main workflow
+    types:
+      - requested
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get pending deployments
+        id: get-deployments
+        run: |
+          # Get pending deployments for this workflow run
+          DEPLOYMENTS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/pending_deployments")
+          
+          echo "deployments=$DEPLOYMENTS" >> $GITHUB_OUTPUT
+          echo "Pending deployments: $DEPLOYMENTS"
+      
+      - name: Check if triggered by admin
+        id: check-admin
+        run: |
+          ACTOR="${{ github.event.workflow_run.actor.login }}"
+          
+          PERMISSION=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/collaborators/$ACTOR/permission" | \
+            jq -r '.permission')
+          
+          echo "Actor: $ACTOR"
+          echo "Permission: $PERMISSION"
+          echo "is-admin=$([[ $PERMISSION == 'admin' ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+      
+      - name: Auto-approve if admin
+        if: steps.check-admin.outputs.is-admin == 'true'
+        run: |
+          DEPLOYMENTS='${{ steps.get-deployments.outputs.deployments }}'
+          
+          # Extract environment IDs that need approval
+          ENV_IDS=$(echo "$DEPLOYMENTS" | jq -r '.[].environment.id')
+          
+          if [ -z "$ENV_IDS" ]; then
+            echo "No pending deployments found"
+            exit 0
+          fi
+          
+          # Approve each pending deployment
+          for ENV_ID in $ENV_IDS; do
+            echo "Auto-approving deployment to environment ID: $ENV_ID"
+            
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/pending_deployments" \
+              -d "{\"environment_ids\":[$ENV_ID],\"state\":\"approved\",\"comment\":\"Auto-approved for admin user\"}")
+            
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | sed '$d')
+            
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              echo "✅ Successfully approved deployment to environment $ENV_ID"
+            else
+              echo "❌ Failed to approve deployment. Status: $HTTP_CODE"
+              echo "Response: $BODY"
+            fi
+          done
+      
+      - name: Skip approval for non-admins
+        if: steps.check-admin.outputs.is-admin != 'true'
+        run: |
+          echo "⏳ Non-admin user - manual approval required"
+          echo "User: ${{ github.event.workflow_run.actor.login }}"
