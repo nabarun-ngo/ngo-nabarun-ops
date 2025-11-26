@@ -2,7 +2,8 @@ name: Auto-Approve for Admins
 
 on:
   workflow_run:
-    workflows: ["Your Deploy Workflow"]  # Name of your main workflow
+    workflows: 
+      - '[Deploy] Deploy Applications'
     types:
       - requested
 
