@@ -182,6 +182,59 @@ jobs:
       DOCKER_TOKEN: ${{ secrets.DOCKER_APIKEY }}
 
 
+  gcp_gae_deploy:
+    if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy_v2 }}
+    needs: set_env
+    name: Deploy to GCP App Engine (Node)
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP-v2.yml@main
+    with:
+      # Application Configuration
+      app_type: 'node'
+      tag_name: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
+      repo_name: 'ngo-nabarun-be-nestjs'
+      repo_owner_name: 'nabarun-ngo'
+      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod' || 'stage' }}
+      #environment_url: 'https://your-node-app.appspot.com'
+      
+      # Node-specific Configuration
+      node_version: '20'
+      package_manager: 'npm'  # or 'yarn' or 'pnpm'
+      install_command: 'npm ci'
+      build_command: 'npm run build'
+      build_directory: '.'
+      artifact_pattern: 'dist'  # or 'build' depending on your setup
+      prod_only_dependencies: true  # Install only production deps for deployment
+      include_node_modules: true    # Include node_modules in deployment
+      install_doppler_cli: true     # Install Doppler CLI for runtime secrets/migrations
+      
+      # Database Migration
+      enable_db_migration: true
+      migration_command: 'dopplar run -- npx prisma migrate deploy'
+      
+      # GCP Configuration
+      gae_app_yaml_path: 'app.yaml'
+      gae_service_name: 'default'
+      
+      # Environment Configuration
+      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod_nest' || 'stage_nest' }}
+      app_doppler_project_name: 'nabarun_backend'
+      app_log_level: 'INFO'
+      
+      # Deployment Configuration
+      enable_health_check: false
+      enable_cache: true
+      
+      # Cleanup Configuration
+      keep_gae_versions: 2
+      gcs_keep_days: 7
+      
+    secrets:
+      gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+      gcp_service_account: ${{ secrets.GCP_SA_KEY_CR }}
+      app_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND_NEST }}
+      repo_token: ${{ secrets.PAT }}
+
+
   sync_data:
       # always Running this data sync for prod deployment
       if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync || fromJson(needs.set_env.outputs.variables).target_env == 'prod' }}
