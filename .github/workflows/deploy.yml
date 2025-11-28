@@ -214,7 +214,6 @@ jobs:
       
       # GCP Configuration
       gae_app_yaml_path: 'app.yaml'
-      gae_service_name: 'default'
       
       # Environment Configuration
       app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod_nest' || 'stage_nest' }}
