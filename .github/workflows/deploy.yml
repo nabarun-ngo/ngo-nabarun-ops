@@ -143,6 +143,7 @@ jobs:
     name: Deploy to GCP App Engine 
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP-v2.yml@main
     with:
+     app_type: 'java'
      tag_name: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
      repo_name: 'ngo-nabarun-be'
      repo_owner_name: 'nabarun-ngo'
@@ -195,7 +196,7 @@ jobs:
       repo_owner_name: 'nabarun-ngo'
       environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod' || 'stage' }}
       #environment_url: 'https://your-node-app.appspot.com'
-      
+      gae_service_name: 'api'
       # Node-specific Configuration
       node_version: '20'
       package_manager: 'npm'  # or 'yarn' or 'pnpm'
