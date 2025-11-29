@@ -39,7 +39,7 @@ jobs:
     with:
       users: ${{ inputs.users || 5 }}
       rampup: ${{ inputs.rampup || 10 }}
-      loops: ${{ inputs.loops || -1 }}
+      loops: ${{ inputs.loops || 1 }}
       target_url: ${{ inputs.environment }}
       script: 'loadtest/scripts/${{ inputs.script_file }}.jmx'
       lifetime:  ${{ github.event.inputs.thread_lifetime || 600 }}
