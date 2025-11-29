@@ -21,16 +21,16 @@ on:
         description: 'JWT token for the LoggedIn User'
       users:
         description: 'Number of concurrent users'
-        required: true
+        required: false
       rampup:
         description: 'Ramp-up time in seconds'
-        required: true
+        required: false
       loops:
         description: 'Number of loops per user'
-        required: true
+        required: false
         default: '-1'
       thread_lifetime:
-        required: true
+        required: false
         description: 'Load duration in seconds'
         
 
