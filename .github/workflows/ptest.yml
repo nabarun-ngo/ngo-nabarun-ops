@@ -1,4 +1,4 @@
-name: Run Performance Tests
+name: '[Test] Run Performance Tests'
 
 on:
   # Manual trigger
