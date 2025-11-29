@@ -248,14 +248,14 @@ jobs:
       secrets:
         token: ${{ secrets.GITHUB_TOKEN }} 
 
-  
+  #needs.gcp_cr_deploy.result == 'success' ||
   trigger_smoke_test:
     name: 'Trigger Smoke Test'
     if: |
       needs.set_env.result == 'success' && 
       fromJson(needs.set_env.outputs.variables).run_smoke_test && 
-      (needs.gcp_cr_deploy.result == 'success' || needs.firebase_deploy.result == 'success')
-    needs: [set_env, firebase_deploy, gcp_cr_deploy]
+      ( needs.firebase_deploy.result == 'success')
+    needs: [set_env, firebase_deploy]
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main
     with:
       repository: 'nabarun-ngo/ngo-nabarun-ops'
