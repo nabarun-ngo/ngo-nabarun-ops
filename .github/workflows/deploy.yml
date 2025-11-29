@@ -149,7 +149,7 @@ jobs:
      repo_owner_name: 'nabarun-ngo'
      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
      target_folder: 'ngo-nabarun-app/target'
-     app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
+     app_doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'prod' || 'stage' }}
      app_doppler_project_name: 'nabarun_backend' 
      app_log_level: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'ERROR' || fromJson(needs.set_env.outputs.variables).log_level || 'WARN' }}
     secrets:
