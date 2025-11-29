@@ -222,7 +222,7 @@ jobs:
       
     secrets:
       gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
-      gcp_service_account: ${{ secrets.GCP_SA_KEY_CR }}
+      gcp_service_account: ${{ secrets.GCP_SA_KEY  }}
       app_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND_NEST }}
       repo_token: ${{ secrets.PAT }}
 
