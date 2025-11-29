@@ -1,0 +1,53 @@
+name: Run Performance Tests
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      script_file:
+        required: true
+        description: "Script name (under 'loadtest/script' folder without .jmx folder)"
+      environment:
+        description: 'Target host'
+        required: true
+        type: choice
+        options:
+          - api-dot-ngonabarun-stage.appspot.com
+          - ngonabarun-stage.appspot.com
+          - ngonabarun.appspot.com
+          - nabarun-be-nest-vwwodl3alq-uc.a.run.app
+      jwt_token:
+        required: true
+        description: 'JWT token for the LoggedIn User'
+      users:
+        description: 'Number of concurrent users'
+        required: true
+      rampup:
+        description: 'Ramp-up time in seconds'
+        required: true
+      loops:
+        description: 'Number of loops per user'
+        required: true
+        default: '-1'
+      thread_lifetime:
+        required: true
+        description: 'Load duration in seconds'
+        
+
+jobs:
+  base-load-test: 
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/jmeter-load-test.yml@main
+    with:
+      users: ${{ inputs.users || 5 }}
+      rampup: ${{ inputs.rampup || 10 }}
+      loops: ${{ inputs.loops || -1 }}
+      target_url: ${{ inputs.environment }}
+      script: 'loadtest/script/${{ inputs.script_file }}.jmx'
+      lifetime:  ${{ github.event.inputs.thread_lifetime || 600 }}
+    secrets:
+      JWT_TOKEN: ${{ inputs.jwt_token }}
+      API_KEY: 'NA'
+
+
+
+  
