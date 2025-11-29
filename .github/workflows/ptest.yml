@@ -28,7 +28,6 @@ on:
       loops:
         description: 'Number of loops per user'
         required: false
-        default: '-1'
       thread_lifetime:
         required: false
         description: 'Load duration in seconds'
