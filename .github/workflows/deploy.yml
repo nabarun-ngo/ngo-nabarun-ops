@@ -198,11 +198,6 @@ jobs:
       #environment_url: 'https://your-node-app.appspot.com'
       gae_service_name: 'api'
       # Node-specific Configuration
-      node_version: '20'
-      package_manager: 'npm'  # or 'yarn' or 'pnpm'
-      install_command: 'npm ci'
-      build_command: 'npm run build'
-      build_directory: '.'
       artifact_pattern: 'dist'  # or 'build' depending on your setup
       prod_only_dependencies: true  # Install only production deps for deployment
       include_node_modules: true    # Include node_modules in deployment
@@ -210,13 +205,10 @@ jobs:
       
       # Database Migration
       enable_db_migration: true
-      migration_command: 'dopplar run -- npx prisma migrate deploy'
-      
-      # GCP Configuration
-      gae_app_yaml_path: 'app.yaml'
-      
+      migration_command: 'npx prisma migrate deploy'
+          
       # Environment Configuration
-      app_env: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod_nest' || 'stage_nest' }}
+      app_doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod_nest' || 'stage_nest' }}
       app_doppler_project_name: 'nabarun_backend'
       app_log_level: 'INFO'
       
