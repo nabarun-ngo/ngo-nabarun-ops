@@ -2,6 +2,20 @@ name: '[Util] MongoDB Data Operations'
 on:
   workflow_dispatch:
     inputs:
+     action:
+        description: "Data Operation"
+        required: true
+        type: choice
+        options:
+          - import
+          - migrate
+     target_env:
+        description: 'Target Environment'  
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
      script-path:
         description: "Relative path to the MongoDB script (.js)"
         required: false
@@ -17,13 +31,12 @@ on:
         required: false
         default: ''
         type: string
-     target_env:
-        description: 'Target Environment'  
-        required: true
-        type: choice
-        options:
-          - stage
-          - prod
+     migration-script:
+        description: "Script path"
+        required: false
+        default: './scripts/mongodb/  .js'
+        type: string
+     
 
 jobs:
   set_env:
@@ -37,6 +50,7 @@ jobs:
     name: 'Mongo Data Ops'
     needs: set_env
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/mongo-cloud.yml@main
+    if: ${{ fromJson(needs.set_env.outputs.variables).action == 'import' }}
     with:
       target-env: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
       script-path: ${{ fromJson(needs.set_env.outputs.variables).script-path }}
@@ -45,11 +59,23 @@ jobs:
     secrets:
       mongo-uri: ${{ secrets.APP_MONGODB_URI }}
 
+  mongo_migrate:
+    name: 'Mongo Migrate'
+    needs: set_env
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/mongo-cloud.yml@main
+    if: ${{ fromJson(needs.set_env.outputs.variables).action == 'migrate' }}
+    with:
+      target-env: ${{ fromJson(needs.set_env.outputs.variables).target_env }}
+      migration-script-path: ${{ fromJson(needs.set_env.outputs.variables).migration-script }}
+    secrets:
+      mongo-uri: ${{ secrets.APP_MONGODB_URI }}
+      postgres-uri: ${{ secrets.APP_POSTGRES_URI }}
+
 
   sync_summary:
     name: '📊 Operation Logs'
     runs-on: ubuntu-latest
-    needs: [set_env, mongo_data]
+    needs: [set_env, mongo_data,mongo_migrate]
     if: always()
     steps:
       - name: 📋 Generate Report
