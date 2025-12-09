@@ -34,7 +34,7 @@ on:
      migration-script:
         description: "Script path"
         required: false
-        default: './scripts/mongodb/  .js'
+        default: './scripts/migrate/  .js'
         type: string
      
 
