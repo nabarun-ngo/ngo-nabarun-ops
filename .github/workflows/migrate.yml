@@ -32,6 +32,7 @@ jobs:
         with:
           repository: 'nabarun-ngo/ngo-nabarun-be-nestjs'
           path: mig
+          ref: ${{ inputs.target_env == 'prod' && 'main' || 'stage'}}
           # If the repo is private, you need a token:
           # token: ${{ secrets.GH_PAT }}
 
