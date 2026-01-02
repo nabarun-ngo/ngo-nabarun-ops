@@ -45,7 +45,7 @@ jobs:
       - name: Run User Migration
         if: ${{ inputs.migration_type == 'users' || inputs.migration_type == 'all' }}
         env:
-          MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
+          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
           MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
         run: npx ts-node mig/scripts/migrate-users.ts
 
@@ -53,5 +53,5 @@ jobs:
         if: ${{ inputs.migration_type == 'finance' || inputs.migration_type == 'all' }}
         env:
           MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
-          MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
         run: npx ts-node mig/scripts/migrate-finance.ts
