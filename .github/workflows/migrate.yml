@@ -46,18 +46,22 @@ jobs:
         run: npm ci
         working-directory: mig
 
+      - name: List Scripts Directory (Debug)
+        run: ls -R scripts
+        working-directory: mig
+
       - name: Run User Migration
         if: ${{ inputs.migration_type == 'users' || inputs.migration_type == 'all' }}
         env:
-          MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
-          MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
-        run: npx ts-node scripts/migrate-users.ts
+          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-users.ts
         working-directory: mig
 
       - name: Run Finance Migration
         if: ${{ inputs.migration_type == 'finance' || inputs.migration_type == 'all' }}
         env:
-          MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
-          MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
-        run: npx ts-node scripts/migrate-finance.ts
+         MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+         MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-finance.ts
         working-directory: mig
