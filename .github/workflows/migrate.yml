@@ -18,6 +18,8 @@ on:
         options:
           - users
           - finance
+          - documents
+          - workflows
           - all
 
 jobs:
@@ -65,4 +67,20 @@ jobs:
          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
         run: npx ts-node ./scripts/migrate-finance.ts
+        working-directory: mig
+
+      - name: Run Document Migration
+        if: ${{ inputs.migration_type == 'documents' || inputs.migration_type == 'all' }}
+        env:
+          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-documents.ts
+        working-directory: mig
+
+      - name: Run Workflow Migration
+        if: ${{ inputs.migration_type == 'workflows' || inputs.migration_type == 'all' }}
+        env:
+          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-workflows.ts
         working-directory: mig
