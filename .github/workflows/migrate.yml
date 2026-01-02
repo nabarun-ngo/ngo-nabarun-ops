@@ -9,8 +9,7 @@ on:
         type: choice
         options:
           - stage
-          - prof
-          - all
+          - prod
       migration_type:
         description: 'Which migration to run?'
         required: true
@@ -20,24 +19,28 @@ on:
           - users
           - finance
           - all
-          
+
 jobs:
   migrate:
     name: 'Run Migration'
     runs-on: ubuntu-latest
     environment: ${{ inputs.target_env }}
+
     steps:
-      - name: Checkout code
+      - name: Checkout Target Repository
         uses: actions/checkout@v4
         with:
           repository: 'nabarun-ngo/ngo-nabarun-be-nestjs'
           path: mig
-          
+          # If the repo is private, you need a token:
+          # token: ${{ secrets.GH_PAT }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18' # Adjust if you use a different version
+          node-version: '18'
           cache: 'npm'
+          cache-dependency-path: mig/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -46,7 +49,7 @@ jobs:
       - name: Run User Migration
         if: ${{ inputs.migration_type == 'users' || inputs.migration_type == 'all' }}
         env:
-          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+          MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
           MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
         run: npx ts-node scripts/migrate-users.ts
         working-directory: mig
@@ -55,6 +58,6 @@ jobs:
         if: ${{ inputs.migration_type == 'finance' || inputs.migration_type == 'all' }}
         env:
           MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
-          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+          MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
         run: npx ts-node scripts/migrate-finance.ts
         working-directory: mig
