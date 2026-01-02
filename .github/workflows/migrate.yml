@@ -1,0 +1,57 @@
+name: '[Util] Run Specific Migrations'
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target Environment'
+        required: true
+        type: choice
+        options:
+          - stage
+          - prof
+          - all
+      migration_type:
+        description: 'Which migration to run?'
+        required: true
+        default: 'users'
+        type: choice
+        options:
+          - users
+          - finance
+          - all
+
+jobs:
+  migrate:
+    name: 'Run Migration'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_env }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          repository: 'nabarun-ngo/ngo-nabarun-be-nestjs'
+          path: mig
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # Adjust if you use a different version
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run User Migration
+        if: ${{ inputs.migration_type == 'users' || inputs.migration_type == 'all' }}
+        env:
+          MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
+          MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
+        run: npx ts-node mig/scripts/migrate-users.ts
+
+      - name: Run Finance Migration
+        if: ${{ inputs.migration_type == 'finance' || inputs.migration_type == 'all' }}
+        env:
+          MIG_MONGODB_URL: ${{ secrets.MIG_MONGODB_URL }}
+          MIG_POSTGRES_URL: ${{ secrets.MIG_POSTGRES_URL }}
+        run: npx ts-node mig/scripts/migrate-finance.ts
