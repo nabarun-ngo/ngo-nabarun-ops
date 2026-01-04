@@ -217,8 +217,8 @@ jobs:
       enable_cache: true
       
       # Cleanup Configuration
-      keep_gae_versions: 2
-      gcs_keep_days: 7
+      keep_gae_versions: 1
+      gcs_keep_days: 0
       
     secrets:
       gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
