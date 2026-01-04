@@ -197,6 +197,7 @@ jobs:
       environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod' || 'stage' }}
       #environment_url: 'https://your-node-app.appspot.com'
       gae_service_name: 'api'
+      gae_app_yaml_path:  ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'app.prod.yaml' || 'app.yaml' }}
       # Node-specific Configuration
       artifact_pattern: 'dist'  # or 'build' depending on your setup
       prod_only_dependencies: true  # Install only production deps for deployment
