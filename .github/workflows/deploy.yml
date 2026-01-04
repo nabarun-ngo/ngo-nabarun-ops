@@ -117,7 +117,7 @@ jobs:
       
   firebase_deploy_public:
     if: ${{ fromJson(needs.set_env.outputs.variables).fe_deploy_public }}
-    needs: [redis_delete]
+    needs: [set_env,redis_delete]
     name: Deploy to Firebase (Public Site)
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-Firebase.yml@main
     with:
