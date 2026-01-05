@@ -219,7 +219,7 @@ jobs:
       
       # Cleanup Configuration
       keep_gae_versions: 1
-      gcs_keep_days: 0
+      gcs_keep_days: 1
       
     secrets:
       gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
