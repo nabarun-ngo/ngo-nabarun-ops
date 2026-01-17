@@ -1,0 +1,146 @@
+name: '[Deploy] Deploy Backend Applications'
+run-name: >
+  ${{ format('{0}Deploying to {1} — BE:{2}',
+    github.event.client_payload.pr_number && format('{0} ', github.event.client_payload.pr_number) || '',
+    github.event.client_payload.target_env || inputs.target_env,
+    github.event.client_payload.be_tag_name || inputs.be_tag_name
+  ) }}  
+  
+on:
+  workflow_dispatch:
+    inputs:
+     be_deploy_v2:
+       description: 'Deploy Backend (NestJS)'
+       required: true
+       type: boolean
+       default: false
+     be_tag_name:
+       required: true
+       description: 'Tag to deploy (Backend)'
+       type: string
+       default: ''
+     target_env:
+       required: true
+       description: 'Target Environment'
+       type: choice
+       options:
+         - stage
+         - prod
+     auth0_sync:
+       description: 'Sync Environments'
+       required: true
+       type: boolean
+       default: false
+     run_smoke_test:
+       description: 'Run Smoke Test'
+       required: true
+       type: boolean
+       default: true
+jobs:
+  set_env:
+    name: 'SetUp Environment'
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Setup-Env.yml@main
+    with:
+      inputs: ${{ toJson(inputs) }}
+      client_payload: ${{ toJson(github.event.client_payload) }}
+
+  redis_delete:
+    name: 'Clean Redis Cache'
+    if: ${{ fromJson(needs.set_env.outputs.variables).fe_deploy_public }}
+    needs: set_env
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Redis-Ops.yml@main
+    with:
+      operation: 'delete-keys'
+      environment: ${{ fromJson(needs.set_env.outputs.variables).target_env}}
+      key: 'REMOTE_CONFIG_PARAMS'
+    secrets:
+      redis_host: ${{ secrets.REDIS_HOST }}
+      redis_port: ${{ secrets.REDIS_PORT }}
+      redis_password: ${{ secrets.REDIS_PASSWORD }}
+      
+  gcp_gae_deploy:
+    if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy_v2 }}
+    needs: [set_env,redis_delete]
+    name: Deploy to GCP App Engine (NestJS)
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP-v2.yml@main
+    with:
+      # Application Configuration
+      app_type: 'node'
+      tag_name: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}
+      repo_name: 'ngo-nabarun-be-nestjs'
+      repo_owner_name: 'nabarun-ngo'
+      environment_name: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod' || 'stage' }}
+      #environment_url: 'https://your-node-app.appspot.com'
+      gae_service_name: 'api'
+      gae_app_yaml_path:  ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'app.prod.yaml' || 'app.yaml' }}
+      # Node-specific Configuration
+      artifact_pattern: 'dist'  # or 'build' depending on your setup
+      prod_only_dependencies: true  # Install only production deps for deployment
+      include_node_modules: true    # Include node_modules in deployment
+      install_doppler_cli: true     # Install Doppler CLI for runtime secrets/migrations
+      
+      # Database Migration
+      enable_db_migration: true
+      migration_command: 'npm ci && npx prisma migrate deploy'
+          
+      # Environment Configuration
+      app_doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod_nest' || 'stage_nest' }}
+      app_doppler_project_name: 'nabarun_backend'
+      app_log_level: 'INFO'
+      
+      # Deployment Configuration
+      enable_health_check: false
+      enable_cache: true
+      
+      # Cleanup Configuration
+      keep_gae_versions: 1
+      gcs_keep_days: 1
+      
+    secrets:
+      gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
+      gcp_service_account: ${{ secrets.GCP_SA_KEY  }}
+      app_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_BACKEND_NEST }}
+      repo_token: ${{ secrets.PAT }}
+
+
+  sync_data:
+      # always Running this data sync for prod deployment
+      if: ${{ fromJson(needs.set_env.outputs.variables).auth0_sync || fromJson(needs.set_env.outputs.variables).target_env == 'prod' }}
+      needs: set_env
+      name: Trigger Sync Auth0 & Firebase
+      uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main    
+      with:
+        repository: 'nabarun-ngo/ngo-nabarun-ops'
+        event_type: Trigger-Import-Sync-Data
+        input_json: |-
+            {
+                "auth0_sync_tenant": true,
+                "auth0_source_tenant": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'STAGE' || 'DEV' }}",
+                "auth0_dest_tenant": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'PROD' || 'STAGE' }}",
+                "firebase_sync_rc" : ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' }},
+                "firebase_source_env" : "STAGE",
+                "firebase_dest_env" : "PROD"
+            } 
+      secrets:
+        token: ${{ secrets.GITHUB_TOKEN }} 
+
+  trigger_smoke_test:
+    name: 'Trigger Smoke Test'
+    if: fromJson(needs.set_env.outputs.variables).run_smoke_test
+    needs: [set_env,gcp_gae_deploy]
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main
+    with:
+      repository: 'nabarun-ngo/ngo-nabarun-ops'
+      event_type: Trigger-Smoke-Test
+      input_json: |-
+        {
+          "test_env": "${{ fromJson(needs.set_env.outputs.variables).target_env }}",
+          "test_type": "Smoke",
+          "be_tag_name": "${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}",
+          "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
+          "cancel_running_test": true
+        }
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+               
+   
