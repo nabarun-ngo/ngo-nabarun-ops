@@ -45,7 +45,7 @@ on:
        description: 'Run Smoke Test'
        required: true
        type: boolean
-       default: false
+       default: true
     
 jobs:
   set_env:
