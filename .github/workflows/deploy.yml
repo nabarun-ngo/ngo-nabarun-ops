@@ -8,13 +8,6 @@ run-name: >
   ) }}  
   
 on:
-  repository_dispatch:
-   # types: 
-     # - Trigger-Deploy-Sync-Test
-     # - Trigger-DeployFE-Sync-Test
-     # - Trigger-DeployBE-Sync-Test
-     # - Trigger-DeployPublicFE
-
   workflow_dispatch:
     inputs:
      fe_deploy:
