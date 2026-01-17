@@ -58,9 +58,7 @@ jobs:
       environment: ${{ fromJson(needs.set_env.outputs.variables).target_env}}
       key: 'REMOTE_CONFIG_PARAMS'
     secrets:
-      redis_host: ${{ secrets.REDIS_HOST }}
-      redis_port: ${{ secrets.REDIS_PORT }}
-      redis_password: ${{ secrets.REDIS_PASSWORD }}
+      redis_uri: ${{ secrets.REDIS_URI }}
       
   gcp_gae_deploy:
     if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy_v2 }}
