@@ -1,4 +1,4 @@
-name: '[Deploy] Deploy Applications'
+name: '[Deploy] Deploy Frontend Applications'
 run-name: >
   ${{ format('{0}Deploying to {1} — FE:{2}',
     github.event.client_payload.pr_number && format('{0} ', github.event.client_payload.pr_number) || '',
