@@ -62,7 +62,7 @@ jobs:
       
   gcp_gae_deploy:
     if: ${{ fromJson(needs.set_env.outputs.variables).be_deploy_v2 }}
-    needs: [set_env,redis_delete]
+    needs: [set_env]
     name: Deploy to GCP App Engine (NestJS)
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Deploy-GCP-v2.yml@main
     with:
