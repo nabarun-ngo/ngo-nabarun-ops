@@ -7,6 +7,10 @@ run-name: >
   ) }}  
   
 on:
+  repository_dispatch:
+    types: 
+      - Trigger-DeployBE-Sync-Test
+      
   workflow_dispatch:
     inputs:
      be_deploy_v2:
