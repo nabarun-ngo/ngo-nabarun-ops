@@ -135,7 +135,7 @@ jobs:
     #   needs.set_env.result == 'success' && 
     #   fromJson(needs.set_env.outputs.variables).run_smoke_test && 
     #   ( needs.firebase_deploy.result == 'success' || needs.firebase_deploy_public.result == 'success')
-    needs: [set_env, firebase_deploy,firebase_deploy_public]
+    needs: [set_env, firebase_deploy]
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Trigger-Workflow.yml@main
     with:
       repository: 'nabarun-ngo/ngo-nabarun-ops'
