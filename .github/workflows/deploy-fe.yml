@@ -146,7 +146,7 @@ jobs:
           "test_type": "Smoke",
           "fe_tag_name": "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}",
           "test_filter_tag_smoke": "${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && '@smokeprod' || '@smoke' }}",
-          "cancel_running_test": ${{ !(fromJson(needs.set_env.outputs.variables).fe_deploy && fromJson(needs.set_env.outputs.variables).be_deploy_v2) }}
+          "cancel_running_test": true
         }
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
