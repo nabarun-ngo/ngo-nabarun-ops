@@ -25,7 +25,7 @@ on:
         description: 'Specific Redis key to delete (leave empty to delete all keys - USE WITH CAUTION!)'
         required: false
         type: string
-        default: ''
+        default: 'REMOTE_CONFIG_PARAMS'
 
 
 
