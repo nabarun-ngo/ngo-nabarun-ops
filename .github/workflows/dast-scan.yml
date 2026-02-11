@@ -1,0 +1,170 @@
+name: DAST Security Scan
+
+on:
+  # Run on pull requests
+  pull_request:
+    branches: [ main, develop ]
+  
+  # Run on pushes to main
+  push:
+    branches: [ main ]
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL to scan'
+        required: true
+        default: 'http://localhost:3000'
+      scan_type:
+        description: 'Scan type (baseline/full/api)'
+        required: true
+        default: 'baseline'
+        type: choice
+        options:
+          - baseline
+          - full
+          - api
+
+  # Schedule weekly scans
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
+
+env:
+  # Default target URL - replace with your application URL
+  TARGET_URL: ${{ github.event.inputs.target_url || 'https://your-app.example.com' }}
+  SCAN_TYPE: ${{ github.event.inputs.scan_type || 'baseline' }}
+
+jobs:
+  dast-scan:
+    name: OWASP ZAP DAST Scan
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      security-events: write  # For uploading SARIF results
+      issues: write           # Optional: for creating issues
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Optional: Deploy/start your application if needed
+      # - name: Start Application
+      #   run: |
+      #     docker-compose up -d
+      #     sleep 30  # Wait for app to be ready
+
+      - name: ZAP Baseline Scan
+        if: env.SCAN_TYPE == 'baseline'
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: ${{ env.TARGET_URL }}
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+          
+      - name: ZAP Full Scan
+        if: env.SCAN_TYPE == 'full'
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: ${{ env.TARGET_URL }}
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      - name: ZAP API Scan
+        if: env.SCAN_TYPE == 'api'
+        uses: zaproxy/action-api-scan@v0.7.0
+        with:
+          target: ${{ env.TARGET_URL }}
+          format: openapi
+          api_spec: 'openapi.json'  # Update path to your API spec
+          cmd_options: '-a'
+
+      # Upload SARIF report to GitHub Security tab
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+
+      # Archive scan reports as artifacts
+      - name: Upload ZAP Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-reports-${{ github.run_number }}
+          path: |
+            results.sarif
+            report_html.html
+            report_md.md
+            report_json.json
+          retention-days: 30
+
+      # Optional: Create an issue if vulnerabilities are found
+      - name: Create Issue on Findings
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔒 Security: DAST Scan Found Vulnerabilities',
+              body: `DAST scan found security vulnerabilities in workflow run #${context.runNumber}.
+              
+              **Scan Details:**
+              - Target: ${{ env.TARGET_URL }}
+              - Type: ${{ env.SCAN_TYPE }}
+              - Workflow: ${context.workflow}
+              - Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+              
+              Please review the scan results in the workflow artifacts and Security tab.`,
+              labels: ['security', 'dast', 'automated']
+            });
+
+  # Optional: Additional job for scanning with Nuclei (another free tool)
+  nuclei-scan:
+    name: Nuclei Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Nuclei Scan
+        uses: projectdiscovery/nuclei-action@v2
+        with:
+          target: ${{ env.TARGET_URL }}
+          flags: "-severity critical,high,medium"
+          github-report: true
+          
+      - name: Upload Nuclei Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nuclei-results-${{ github.run_number }}
+          path: nuclei.log
+          retention-days: 30
+
+  # Optional: Trivy vulnerability scanning for containers
+  trivy-scan:
+    name: Trivy Container Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'your-image:tag'  # Replace with your Docker image
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
