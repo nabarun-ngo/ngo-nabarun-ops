@@ -233,7 +233,8 @@ jobs:
           echo "View them at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   # Optional: Additional job for scanning with Nuclei (another free tool)
-  nuclei-scan:
+  
+   nuclei-scan:
     name: Nuclei Security Scan
     runs-on: ubuntu-latest
     
