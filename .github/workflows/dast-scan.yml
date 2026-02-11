@@ -1,14 +1,6 @@
 name: DAST Security Scan
 
 on:
-  # Run on pull requests
-  pull_request:
-    branches: [ main, develop ]
-  
-  # Run on pushes to main
-  push:
-    branches: [ main ]
-  
   # Allow manual trigger
   workflow_dispatch:
     inputs:
@@ -26,13 +18,9 @@ on:
           - full
           - api
 
-  # Schedule weekly scans
-  schedule:
-    - cron: '0 2 * * 1'  # Every Monday at 2 AM UTC
-
 env:
   # Default target URL - replace with your application URL
-  TARGET_URL: ${{ github.event.inputs.target_url || 'https://your-app.example.com' }}
+  TARGET_URL: ${{ github.event.inputs.target_url }}
   SCAN_TYPE: ${{ github.event.inputs.scan_type || 'baseline' }}
 
 jobs:
@@ -48,12 +36,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      # Optional: Deploy/start your application if needed
-      # - name: Start Application
-      #   run: |
-      #     docker-compose up -d
-      #     sleep 30  # Wait for app to be ready
 
       - name: ZAP Baseline Scan
         if: env.SCAN_TYPE == 'baseline'
@@ -137,6 +119,9 @@ jobs:
           target: ${{ env.TARGET_URL }}
           flags: "-severity critical,high,medium"
           github-report: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+
           
       - name: Upload Nuclei Results
         uses: actions/upload-artifact@v4
@@ -145,26 +130,3 @@ jobs:
           name: nuclei-results-${{ github.run_number }}
           path: nuclei.log
           retention-days: 30
-
-  # Optional: Trivy vulnerability scanning for containers
-  trivy-scan:
-    name: Trivy Container Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'your-image:tag'  # Replace with your Docker image
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
