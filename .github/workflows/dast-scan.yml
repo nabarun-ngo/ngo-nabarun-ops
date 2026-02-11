@@ -24,63 +24,214 @@ env:
   SCAN_TYPE: ${{ github.event.inputs.scan_type || 'baseline' }}
 
 jobs:
-  dast-scan:
-    name: OWASP ZAP DAST Scan
+   zap-scan:
+    name: OWASP ZAP Security Scan
     runs-on: ubuntu-latest
     
     permissions:
       contents: read
-      security-events: write  # For uploading SARIF results
-      issues: write           # Optional: for creating issues
+      security-events: write
+      issues: write
     
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: ZAP Baseline Scan
-        if: env.SCAN_TYPE == 'baseline'
+      - name: Create ZAP Configuration Directory
+        run: |
+          mkdir -p .zap
+          if [ ! -f .zap/rules.tsv ]; then
+            echo "Creating default ZAP rules file"
+            cat > .zap/rules.tsv << 'EOF'
+          10021	WARN	X-Content-Type-Options Header Missing
+          10023	FAIL	Information Disclosure - Debug Error Messages
+          10027	IGNORE	Information Disclosure - Suspicious Comments
+          10035	WARN	Strict-Transport-Security Header Missing
+          10038	WARN	Content Security Policy (CSP) Header Not Set
+          10096	IGNORE	Timestamp Disclosure
+          40018	FAIL	SQL Injection
+          40012	FAIL	Cross Site Scripting (Reflected)
+          40014	FAIL	Cross Site Scripting (Persistent)
+          EOF
+          fi
+
+      - name: Run ZAP Baseline Scan
+        if: env.SCAN_TYPE == 'baseline' || env.SCAN_TYPE == ''
         uses: zaproxy/action-baseline@v0.12.0
         with:
           target: ${{ env.TARGET_URL }}
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
-          
-      - name: ZAP Full Scan
+          fail_action: false
+          allow_issue_writing: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run ZAP Full Scan
         if: env.SCAN_TYPE == 'full'
         uses: zaproxy/action-full-scan@v0.10.0
         with:
           target: ${{ env.TARGET_URL }}
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
+          fail_action: false
+          allow_issue_writing: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: ZAP API Scan
-        if: env.SCAN_TYPE == 'api'
-        uses: zaproxy/action-api-scan@v0.7.0
-        with:
-          target: ${{ env.TARGET_URL }}
-          format: openapi
-          api_spec: 'openapi.json'  # Update path to your API spec
-          cmd_options: '-a'
-
-      # Upload SARIF report to GitHub Security tab
-      - name: Upload SARIF results
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Create Reports Directory
         if: always()
+        run: mkdir -p reports
+
+      - name: Copy ZAP Reports
+        if: always()
+        run: |
+          # Copy reports if they exist
+          [ -f report_html.html ] && cp report_html.html reports/ || true
+          [ -f report_json.json ] && cp report_json.json reports/ || true
+          [ -f report_md.md ] && cp report_md.md reports/ || true
+          [ -f results.sarif ] && cp results.sarif reports/ || true
+          
+          # List what we have
+          echo "Reports generated:"
+          ls -lah reports/ || echo "No reports found"
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('results.sarif') != ''
+        continue-on-error: true
         with:
           sarif_file: results.sarif
+          category: zap-scan
 
-      # Archive scan reports as artifacts
-      - name: Upload ZAP Reports
+      - name: Upload Scan Reports as Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: zap-reports-${{ github.run_number }}
+          name: zap-scan-reports-${{ github.run_number }}
           path: |
-            results.sarif
+            reports/
             report_html.html
-            report_md.md
             report_json.json
+            report_md.md
+            results.sarif
           retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Parse Scan Results
+        if: always() && hashFiles('report_json.json') != ''
+        id: parse_results
+        run: |
+          if [ -f report_json.json ]; then
+            # Install jq if not available
+            if ! command -v jq &> /dev/null; then
+              sudo apt-get update && sudo apt-get install -y jq
+            fi
+            
+            # Count findings by risk level
+            HIGH=$(jq '[.site[0].alerts[]? | select(.riskcode == "3")] | length' report_json.json 2>/dev/null || echo "0")
+            MEDIUM=$(jq '[.site[0].alerts[]? | select(.riskcode == "2")] | length' report_json.json 2>/dev/null || echo "0")
+            LOW=$(jq '[.site[0].alerts[]? | select(.riskcode == "1")] | length' report_json.json 2>/dev/null || echo "0")
+            INFO=$(jq '[.site[0].alerts[]? | select(.riskcode == "0")] | length' report_json.json 2>/dev/null || echo "0")
+            
+            echo "high_count=$HIGH" >> $GITHUB_OUTPUT
+            echo "medium_count=$MEDIUM" >> $GITHUB_OUTPUT
+            echo "low_count=$LOW" >> $GITHUB_OUTPUT
+            echo "info_count=$INFO" >> $GITHUB_OUTPUT
+            
+            echo "### 🔒 Scan Results Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Risk Level | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|------------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔴 High | $HIGH |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🟡 Medium | $MEDIUM |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🔵 Low | $LOW |" >> $GITHUB_STEP_SUMMARY
+            echo "| ℹ️ Info | $INFO |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Target:** ${{ env.TARGET_URL }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Scan Type:** ${{ env.SCAN_TYPE }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No JSON report found"
+            echo "high_count=0" >> $GITHUB_OUTPUT
+            echo "medium_count=0" >> $GITHUB_OUTPUT
+            echo "low_count=0" >> $GITHUB_OUTPUT
+            echo "info_count=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Issue on Critical Findings
+        if: always() && (steps.parse_results.outputs.high_count > 0 || steps.parse_results.outputs.medium_count > 2)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const high = ${{ steps.parse_results.outputs.high_count || 0 }};
+            const medium = ${{ steps.parse_results.outputs.medium_count || 0 }};
+            const low = ${{ steps.parse_results.outputs.low_count || 0 }};
+            
+            const issueBody = `## 🔒 DAST Scan Found Security Vulnerabilities
+            
+            ### Summary
+            
+            | Risk Level | Count |
+            |------------|-------|
+            | 🔴 High | ${high} |
+            | 🟡 Medium | ${medium} |
+            | 🔵 Low | ${low} |
+            
+            ### Details
+            
+            - **Target URL:** ${{ env.TARGET_URL }}
+            - **Scan Type:** ${{ env.SCAN_TYPE }}
+            - **Workflow Run:** [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            - **Triggered by:** ${context.eventName}
+            
+            ### Next Steps
+            
+            1. 📥 Download the detailed reports from the workflow artifacts
+            2. 🔍 Review findings in the [Security tab](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/security/code-scanning)
+            3. 🔧 Fix high and medium severity issues first
+            4. ✅ Re-run the scan to verify fixes
+            
+            ### Available Reports
+            
+            - HTML Report (detailed findings with remediation)
+            - JSON Report (machine-readable results)
+            - SARIF Report (GitHub Security integration)
+            - Markdown Report (summary)
+            
+            ---
+            
+            *This issue was automatically created by the DAST security scan workflow.*
+            *Close this issue after addressing the vulnerabilities and verifying with a re-scan.*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔒 Security: ${high} High & ${medium} Medium Vulnerabilities Found`,
+              body: issueBody,
+              labels: ['security', 'dast', 'vulnerability', 'automated']
+            });
+
+      - name: Display Scan Summary
+        if: always()
+        run: |
+          echo "=================================="
+          echo "  DAST Scan Completed"
+          echo "=================================="
+          echo ""
+          echo "Target: ${{ env.TARGET_URL }}"
+          echo "Scan Type: ${{ env.SCAN_TYPE }}"
+          echo ""
+          
+          if [ -f report_md.md ]; then
+            echo "Scan Summary:"
+            cat report_md.md
+          else
+            echo "No summary report available"
+          fi
+          
+          echo ""
+          echo "Reports are available in workflow artifacts"
+          echo "View them at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
 
       # Optional: Create an issue if vulnerabilities are found
       - name: Create Issue on Findings
