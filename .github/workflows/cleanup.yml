@@ -1,0 +1,64 @@
+name: Automatic Approve Cleanup
+on:
+  workflow_dispatch: 
+  schedule:
+     - cron: "0 17 * * MON,WED,FRI"
+jobs:
+  gcp_cleanup:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - env: stage
+          project_id: ngonabarun-stage
+        - env: prod
+          project_id: ngonabarun
+          
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select credentials
+        id: creds
+        run: |
+          if [ "${{ matrix.env }}" = "prod" ]; then
+            echo "sa=${{ secrets.GCP_SA_KEY_PROD }}" >> $GITHUB_OUTPUT
+          else
+            echo "sa=${{ secrets.GCP_SA_KEY_STAGE }}" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ matrix.project_id }}
+          credentials_json: ${{ steps.creds.outputs.sa }}
+          
+      - name: Clean Artifact Registry repositories
+        uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/gcp-clean-artifact-registry@main
+        continue-on-error: true
+        with:
+          project_id: ${{ matrix.project_id }}
+
+      - name: Clean old GAE versions
+        uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/gcp-clean-gae-versions@main
+        with:
+          project_id: ${{ matrix.project_id }}
+          service_name: 'api'
+          keep_versions: 1
+
+      - name: Clean old GCS files
+        uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/gcp-clean-gcs-files@main
+        continue-on-error: true
+        with:
+          project_id: ${{ matrix.project_id }}
+          keep_days: 1
+          bucket_patterns: 'auto'
+          timeout_minutes: '10'
+  
+  # automatic-approve:
+  #   name: Automatic Approve
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Automatic Approve
+  #       uses: mheap/automatic-approve-action@v1
+  #       with:
+  #         token: ${{ secrets.PAT }}
+  #         workflows: "cleanup.yml,sync-import-data.yml"
