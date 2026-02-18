@@ -15,21 +15,12 @@ jobs:
           project_id: ngonabarun
           
     runs-on: ubuntu-latest
-    steps:
-      - name: Select credentials
-        id: creds
-        run: |
-          if [ "${{ matrix.env }}" = "prod" ]; then
-            echo "sa=${{ secrets.GCP_SA_KEY_PROD }}" >> $GITHUB_OUTPUT
-          else
-            echo "sa=${{ secrets.GCP_SA_KEY_STAGE }}" >> $GITHUB_OUTPUT
-          fi
-          
+    steps:     
       - name: Setup Google Cloud CLI
         uses: google-github-actions/auth@v2
         with:
           project_id: ${{ matrix.project_id }}
-          credentials_json: ${{ steps.creds.outputs.sa }}
+          credentials_json: ${{ matrix.env == 'prod' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_STAGE }}
           
       - name: Clean Artifact Registry repositories
         uses: nabarun-ngo/ngo-nabarun-templates/.github/actions/gcp-clean-artifact-registry@main
