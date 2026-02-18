@@ -1,4 +1,4 @@
-name: Automatic Approve Cleanup
+name: Automatic Cleanup
 on:
   workflow_dispatch: 
   schedule:
