@@ -88,7 +88,7 @@ jobs:
       
       # Database Migration
       enable_db_migration: true
-      migration_command: ${{inputs.migration_command}} || 'npm ci && npx prisma migrate deploy'
+      migration_command: ${{inputs.migration_command || 'npm ci && npx prisma migrate deploy'}}
           
       # Environment Configuration
       app_doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod_nest' || 'stage_nest' }}
