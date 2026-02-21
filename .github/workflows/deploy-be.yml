@@ -44,7 +44,7 @@ on:
        description: 'Migration command'
        required: false
        type: string
-       default: 'npm ci && npx prisma migrate deploy'
+       default: 'npx prisma migrate deploy'
 jobs:
   set_env:
     name: 'SetUp Environment'
@@ -88,7 +88,7 @@ jobs:
       
       # Database Migration
       enable_db_migration: true
-      migration_command: ${{inputs.migration_command || 'npm ci && npx prisma migrate deploy'}}
+      migration_command: npm ci && ${{inputs.migration_command || 'npx prisma migrate deploy'}}
           
       # Environment Configuration
       app_doppler_config: ${{ fromJson(needs.set_env.outputs.variables).target_env  == 'prod' && 'prod_nest' || 'stage_nest' }}
