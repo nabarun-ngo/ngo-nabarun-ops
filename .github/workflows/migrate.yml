@@ -20,6 +20,7 @@ on:
           - finance
           - documents
           - workflows
+          - auth0_user
           - all
 
 jobs:
@@ -83,4 +84,14 @@ jobs:
           MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
           MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
         run: npx ts-node ./scripts/migrate-workflows.ts
+        working-directory: mig
+
+      - name: Run Auth0 User Migration
+        if: ${{ inputs.migration_type == 'auth0_user' || inputs.migration_type == 'all' }}
+        env:
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_MANAGEMENT_CLIENT_ID: ${{secrets.AUTH0_MANAGEMENT_CLIENT_ID}}
+          AUTH0_MANAGEMENT_CLIENT_SECRET: ${{secrets.AUTH0_MANAGEMENT_CLIENT_SECRET}}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/auth0-import.ts
         working-directory: mig
