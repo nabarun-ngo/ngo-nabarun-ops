@@ -1,0 +1,97 @@
+name: '[Util] Run Specific Migrations'
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target Environment'
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
+      migration_type:
+        description: 'Which migration to run?'
+        required: true
+        default: 'users'
+        type: choice
+        options:
+          - users
+          - finance
+          - documents
+          - workflows
+          - auth0_user
+          - all
+
+jobs:
+  migrate:
+    name: 'Run Migration'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_env }}
+
+    steps:
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'nabarun-ngo/ngo-nabarun-be-nestjs'
+          path: mig
+          ref: ${{ inputs.target_env == 'prod' && 'main' || 'stage'}}
+          # If the repo is private, you need a token:
+          # token: ${{ secrets.GH_PAT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mig/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: mig
+
+      - name: List Scripts Directory (Debug)
+        run: ls -R scripts
+        working-directory: mig
+
+      - name: Run User Migration
+        if: ${{ inputs.migration_type == 'users' || inputs.migration_type == 'all' }}
+        env:
+          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-users.ts
+        working-directory: mig
+
+      - name: Run Finance Migration
+        if: ${{ inputs.migration_type == 'finance' || inputs.migration_type == 'all' }}
+        env:
+         MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+         MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-finance.ts
+        working-directory: mig
+
+      - name: Run Document Migration
+        if: ${{ inputs.migration_type == 'documents' || inputs.migration_type == 'all' }}
+        env:
+          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-documents.ts
+        working-directory: mig
+
+      - name: Run Workflow Migration
+        if: ${{ inputs.migration_type == 'workflows' || inputs.migration_type == 'all' }}
+        env:
+          MIG_MONGODB_URL: ${{ secrets.APP_MONGODB_URI }}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/migrate-workflows.ts
+        working-directory: mig
+
+      - name: Run Auth0 User Migration
+        if: ${{ inputs.migration_type == 'auth0_user' || inputs.migration_type == 'all' }}
+        env:
+          AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+          AUTH0_MANAGEMENT_CLIENT_ID: ${{secrets.AUTH0_MANAGEMENT_CLIENT_ID}}
+          AUTH0_MANAGEMENT_CLIENT_SECRET: ${{secrets.AUTH0_MANAGEMENT_CLIENT_SECRET}}
+          MIG_POSTGRES_URL: ${{ secrets.APP_POSTGRES_URI }}
+        run: npx ts-node ./scripts/auth0-import.ts
+        working-directory: mig

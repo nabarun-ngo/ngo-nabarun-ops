@@ -71,6 +71,7 @@ jobs:
       test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
       qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
       jira_url: ${{ vars.JIRA_URL }}
+      java_version: 21
 
     secrets:
       test_doppler_service_token: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && secrets.DOPPLER_TOKEN_NABARUN_TESTS_PROD || secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
@@ -100,6 +101,7 @@ jobs:
       test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
       qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
       jira_url: ${{ vars.JIRA_URL }}
+      java_version: 21
 
 
     secrets:
@@ -107,89 +109,3 @@ jobs:
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
 
-  test_summary:
-    name: '📊 Test Summary'
-    runs-on: ubuntu-latest
-    needs: [set_env, run_automated_test_smoke, run_automated_test_regression]
-    if: always()
-    steps:
-      - name: 📋 Generate Test Report
-        id: summary
-        run: |
-          echo "## 🧪 Test Execution Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🎯 Test Configuration" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ fromJson(needs.set_env.outputs.variables).test_env }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Test Type**: ${{ fromJson(needs.set_env.outputs.variables).test_type }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}" != "" ]]; then
-            echo "- **Frontend Version**: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}" != "" ]]; then
-            echo "- **Backend Version**: ${{ fromJson(needs.set_env.outputs.variables).be_tag_name }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🚀 Test Execution Status" >> $GITHUB_STEP_SUMMARY
-          
-          # Smoke Test Status
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).test_type }}" == "Smoke" ]]; then
-            if [[ "${{ needs.run_automated_test_smoke.result }}" == "success" ]]; then
-              echo "- ✅ **Smoke Tests**: Successfully completed" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Test Tags**: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_smoke }}" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Max Tests per Matrix**: 1" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Environment**: ${{ fromJson(needs.set_env.outputs.variables).test_env }}" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Branch**: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && 'master' || 'stage' }}" >> $GITHUB_STEP_SUMMARY
-            elif [[ "${{ needs.run_automated_test_smoke.result }}" == "skipped" ]]; then
-              echo "- ⏭️ **Smoke Tests**: Skipped" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- ❌ **Smoke Tests**: Failed" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-          
-          # Regression Test Status
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).test_type }}" == "Regression" ]]; then
-            if [[ "${{ needs.run_automated_test_regression.result }}" == "success" ]]; then
-              echo "- ✅ **Regression Tests**: Successfully completed" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Test Tags**: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Max Tests per Matrix**: 5" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Environment**: stage (Regression tests only run in stage)" >> $GITHUB_STEP_SUMMARY
-              echo "  - **Branch**: stage" >> $GITHUB_STEP_SUMMARY
-            elif [[ "${{ needs.run_automated_test_regression.result }}" == "skipped" ]]; then
-              echo "- ⏭️ **Regression Tests**: Skipped" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- ❌ **Regression Tests**: Failed" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔍 Test Integration Details" >> $GITHUB_STEP_SUMMARY
-          echo "- **Test Repository**: https://github.com/nabarun-ngo/ngo-nabarun-test" >> $GITHUB_STEP_SUMMARY
-          echo "- **Jira URL**: ${{ vars.JIRA_URL }}" >> $GITHUB_STEP_SUMMARY
-                    
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔗 Execution URLs" >> $GITHUB_STEP_SUMMARY          
-          # Add test execution URL from reusable workflow output
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).test_type }}" == "Smoke" && "${{ needs.run_automated_test_smoke.outputs.test_execution_url }}" != "" ]]; then
-            echo "- **Test Execution Report**: ${{ needs.run_automated_test_smoke.outputs.test_execution_url }}" >> $GITHUB_STEP_SUMMARY
-          elif [[ "${{ fromJson(needs.set_env.outputs.variables).test_type }}" == "Regression" && "${{ needs.run_automated_test_regression.outputs.test_execution_url }}" != "" ]]; then
-            echo "- **Test Execution Report**: ${{ needs.run_automated_test_regression.outputs.test_execution_url }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📝 Test Notes" >> $GITHUB_STEP_SUMMARY
-          echo "- Triggered by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Workflow: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
-          
-          # Overall status
-          if [[ "${{ fromJson(needs.set_env.outputs.variables).test_type }}" == "Smoke" && "${{ needs.run_automated_test_smoke.result }}" == "success" ]]; then
-            echo "\n✅ **Success**: Smoke tests completed successfully." >> $GITHUB_STEP_SUMMARY
-          elif [[ "${{ fromJson(needs.set_env.outputs.variables).test_type }}" == "Regression" && "${{ needs.run_automated_test_regression.result }}" == "success" ]]; then
-            echo "\n✅ **Success**: Regression tests completed successfully." >> $GITHUB_STEP_SUMMARY
-          elif [[ "${{ needs.run_automated_test_smoke.result }}" == "failure" || "${{ needs.run_automated_test_regression.result }}" == "failure" ]]; then
-            echo "\n❗ **Warning**: One or more test executions failed. Review logs and QMetry reports for details." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "\nℹ️ **Info**: No test execution was triggered or tests were skipped." >> $GITHUB_STEP_SUMMARY
-          fi

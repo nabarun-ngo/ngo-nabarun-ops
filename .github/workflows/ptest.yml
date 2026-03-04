@@ -1,4 +1,4 @@
-name: Run Performance Tests
+name: '[Test] Run Performance Tests'
 
 on:
   # Manual trigger
@@ -28,7 +28,6 @@ on:
       loops:
         description: 'Number of loops per user'
         required: false
-        default: '-1'
       thread_lifetime:
         required: false
         description: 'Load duration in seconds'
@@ -38,12 +37,12 @@ jobs:
   base-load-test: 
     uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/jmeter-load-test.yml@main
     with:
-      users: ${{ inputs.users || 5 }}
-      rampup: ${{ inputs.rampup || 10 }}
-      loops: ${{ inputs.loops || -1 }}
+      users: ${{ inputs.users || '5' }}
+      rampup: ${{ inputs.rampup || '10' }}
+      loops: ${{ inputs.loops || '1' }}
       target_url: ${{ inputs.environment }}
-      script: 'loadtest/script/${{ inputs.script_file }}.jmx'
-      lifetime:  ${{ github.event.inputs.thread_lifetime || 600 }}
+      script: 'loadtest/scripts/${{ inputs.script_file }}.jmx'
+      lifetime:  ${{ inputs.thread_lifetime || '600' }}
     secrets:
       JWT_TOKEN: ${{ inputs.jwt_token }}
       API_KEY: 'NA'
