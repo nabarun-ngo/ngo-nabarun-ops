@@ -74,6 +74,7 @@ jobs:
       java_version: 21
 
     secrets:
+      repo_token: ${{ secrets.PAT }}
       test_doppler_service_token: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && secrets.DOPPLER_TOKEN_NABARUN_TESTS_PROD || secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
@@ -105,6 +106,7 @@ jobs:
 
 
     secrets:
+      repo_token: ${{ secrets.PAT }}
       test_doppler_service_token: ${{ secrets.DOPPLER_TOKEN_NABARUN_TESTS_STAGE }}
       qmetry_api_key: ${{ secrets.QMETRY_APIKEY }}
       qmetry_open_api_key: ${{ secrets.QMETRY_OPEN_APIKEY }}
