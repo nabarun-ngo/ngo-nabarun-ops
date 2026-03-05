@@ -7,7 +7,7 @@ on:
       target_url:
         description: 'Target URL to scan'
         required: true
-        default: 'http://localhost:3000'
+        default: 'https://stage.ngonabarun.org'
       scan_type:
         description: 'Scan type (baseline/full/api)'
         required: true
@@ -18,10 +18,20 @@ on:
           - full
           - api
 
+  # Trigger once a week for a deep full scan (cost-effective)
+  schedule:
+    - cron: '30 18 * * 6' # 12 AM IST Sunday
+
+  # Allow triggering from other workflows (e.g. after deployment)
+  repository_dispatch:
+    types: [Trigger-DAST-Scan]
+
 env:
-  # Default target URL - replace with your application URL
-  TARGET_URL: ${{ github.event.inputs.target_url }}
-  SCAN_TYPE: ${{ github.event.inputs.scan_type || 'baseline' }}
+  # Priority: Manual Input > Dispatch Payload > Default
+  TARGET_URL: ${{ github.event.inputs.target_url || github.event.client_payload.target_url || 'https://stage.ngonabarun.org' }}
+  # Priority: Manual Input > Dispatch Payload > 'full' for schedule > 'baseline'
+  SCAN_TYPE: ${{ github.event.inputs.scan_type || github.event.client_payload.scan_type || (github.event_name == 'schedule' && 'full' || 'baseline') }}
+
 
 jobs:
    zap-scan:
@@ -61,7 +71,9 @@ jobs:
         with:
           target: ${{ env.TARGET_URL }}
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          # Removed -a (active scan) to make it PASSIVE and FAST
+          # Added -T 15 (Max 15 minutes)
+          cmd_options: '-T 15'
           fail_action: false
           allow_issue_writing: false
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,10 +84,24 @@ jobs:
         with:
           target: ${{ env.TARGET_URL }}
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          # Added -T 60 to prevent it from running for hours
+          cmd_options: '-a -T 60'
           fail_action: false
           allow_issue_writing: false
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run ZAP API Scan
+        if: env.SCAN_TYPE == 'api'
+        uses: zaproxy/action-api-scan@v0.9.0
+        with:
+          target: ${{ env.TARGET_URL }}
+          format: openapi
+          rules_file_name: '.zap/rules.tsv'
+          # API scans are specifically for endpoints, no crawling needed
+          cmd_options: '-T 15'
+          fail_action: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: Create Reports Directory
         if: always()
