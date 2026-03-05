@@ -91,7 +91,7 @@ jobs:
       branch_name: 'stage'
       test_env: 'stage'
       test_type: ${{ fromJson(needs.set_env.outputs.variables).test_type }}
-      max_tests_per_matrix: 5
+      max_tests_per_matrix: 2
       test_cucumber_tags: ${{ fromJson(needs.set_env.outputs.variables).test_filter_tag_regression }}
       test_doppler_project_name: 'nabarun_test'
       upload_result: true
