@@ -69,6 +69,7 @@ jobs:
       repository_name: 'nabarun-ngo/ngo-nabarun-test'
       test_cycle_folder: ${{ fromJson(needs.set_env.outputs.variables).test_env == 'prod' && vars.QMETRY_TEST_CYCLE_FOLDER_PROD || vars.QMETRY_TEST_CYCLE_FOLDER_STAGE }}
       test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
+      qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
       qmetry_execution_url: ${{ vars.QMETRY_EXECUTION_URL }}
       jira_url: ${{ vars.JIRA_URL }}
       java_version: 21
@@ -101,6 +102,7 @@ jobs:
       repository_name: 'nabarun-ngo/ngo-nabarun-test'
       test_cycle_folder: ${{ vars.QMETRY_TEST_CYCLE_FOLDER_STAGE }}
       test_case_folder: ${{ vars.QMETRY_TEST_CASE_FOLDER }}
+      qmetry_project_id: ${{ vars.QMETRY_PROJECT_ID }}
       qmetry_execution_url: ${{ vars.QMETRY_EXECUTION_URL }}
       jira_url: ${{ vars.JIRA_URL }}
       java_version: 21
