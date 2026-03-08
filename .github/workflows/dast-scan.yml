@@ -19,8 +19,8 @@ on:
           - api
 
   # Trigger once a week for a deep full scan (cost-effective)
-  schedule:
-    - cron: '30 18 * * 6' # 12 AM IST Sunday
+  # schedule:
+  #   - cron: '30 18 * * 6' # 12 AM IST Sunday
 
   # Allow triggering from other workflows (e.g. after deployment)
   repository_dispatch:
