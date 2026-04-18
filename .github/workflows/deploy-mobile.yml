@@ -92,36 +92,54 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
-      - name: Set Build Tool Version
+      - name: Sign APK (Manual)
+        id: sign_app
         shell: bash
         run: |
-          # Use ANDROID_HOME or fallback to common location
+          # 1. Setup paths
           SDK_PATH=${ANDROID_HOME:-/usr/local/lib/android/sdk}
-          echo "Searching for build tools in: $SDK_PATH/build-tools"
+          BUILD_TOOL_VERSION=$(ls "$SDK_PATH/build-tools/" | sort -V | tail -n 1)
+          APKSIGNER="$SDK_PATH/build-tools/$BUILD_TOOL_VERSION/apksigner"
+          ZIPALIGN="$SDK_PATH/build-tools/$BUILD_TOOL_VERSION/zipalign"
           
-          if [ -d "$SDK_PATH/build-tools" ]; then
-            # Get latest version using version sort
-            BUILD_TOOL_VERSION=$(ls "$SDK_PATH/build-tools/" | sort -V | tail -n 1)
-            echo "Found Build Tool Version: $BUILD_TOOL_VERSION"
-            echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
-            
-            # Add to PATH as well
-            echo "$SDK_PATH/build-tools/$BUILD_TOOL_VERSION" >> $GITHUB_PATH
-          else
-            echo "Error: Build tools directory not found in $SDK_PATH"
+          echo "Using Build Tools Version: $BUILD_TOOL_VERSION"
+          
+          APK_DIR="android/app/build/outputs/apk/release"
+          # Find the unsigned APK (usually app-release-unsigned.apk)
+          UNSIGNED_APK=$(find $APK_DIR -name "*-unsigned.apk" | head -n 1)
+          
+          if [ -z "$UNSIGNED_APK" ]; then
+            echo "Error: Could not find unsigned APK in $APK_DIR"
+            ls -R $APK_DIR
             exit 1
           fi
-
-      - name: Sign APK
-        id: sign_app
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: android/app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
+          
+          SIGNED_APK="$APK_DIR/app-release-signed.apk"
+          
+          # 2. Decode Keystore
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+          
+          # 3. Zipalign
+          echo "Aligning APK..."
+          $ZIPALIGN -f -v 4 "$UNSIGNED_APK" "$SIGNED_APK"
+          
+          # 4. Sign
+          echo "Signing APK..."
+          $APKSIGNER sign --ks release.keystore \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass pass:"${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --key-pass pass:"${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            --out "$SIGNED_APK" \
+            "$SIGNED_APK"
+          
+          # 5. Verify
+          $APKSIGNER verify "$SIGNED_APK"
+          
+          # 6. Set output for Firebase distribution
+          echo "signedReleaseFile=$SIGNED_APK" >> $GITHUB_OUTPUT
+          
+          # Cleanup
+          rm release.keystore
 
       - name: Firebase App Distribution (Android)
         uses: w9jds/firebase-action@master
