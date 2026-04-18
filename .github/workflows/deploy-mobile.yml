@@ -60,6 +60,7 @@ jobs:
           repository: nabarun-ngo/ngo-nabarun-fe
           token: ${{ secrets.PAT }}
           ref: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -117,7 +118,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
+          repository: nabarun-ngo/ngo-nabarun-fe
+          token: ${{ secrets.PAT }}
           ref: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
