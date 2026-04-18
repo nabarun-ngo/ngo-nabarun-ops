@@ -1,0 +1,156 @@
+name: '[Deploy] Deploy Mobile Application'
+run-name: >
+  ${{ format('{0}Deploying Mobile to {1} — FE:{2}',
+    github.event.client_payload.pr_number && format('{0} ', github.event.client_payload.pr_number) || '',
+    github.event.client_payload.target_env || inputs.target_env,
+    github.event.client_payload.fe_tag_name || inputs.fe_tag_name,
+  ) }}  
+
+on:
+  repository_dispatch:
+    types: 
+      - Trigger-DeployMobile-Sync-Test
+
+  workflow_dispatch:
+    inputs:
+      mobile_deploy:
+        description: 'Deploy Mobile (iOS/Android)'
+        required: true
+        type: choice
+        options:
+          - android
+          - ios
+          - both
+        default: android
+      fe_tag_name:
+        required: true
+        description: 'Tag to deploy (Frontend)'
+        type: string
+        default: ''
+      target_env:
+        required: true
+        description: 'Target Environment'
+        type: choice
+        options:
+          - stage
+          - prod
+      run_smoke_test:
+        description: 'Run Smoke Test (Mobile)'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  set_env:
+    name: 'SetUp Environment'
+    uses: nabarun-ngo/ngo-nabarun-templates/.github/workflows/Setup-Env.yml@main
+    with:
+      inputs: ${{ toJson(inputs) }}
+      client_payload: ${{ toJson(github.event.client_payload) }}
+
+  build_android:
+    if: ${{ fromJson(needs.set_env.outputs.variables).mobile_deploy == 'android' || fromJson(needs.set_env.outputs.variables).mobile_deploy == 'both' }}
+    needs: set_env
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Angular Web App
+        run: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm run build' || 'npm run build:stage' }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build Android APK (Release)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Sign APK
+        id: sign_app
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Firebase App Distribution (Android)
+        uses: w9jds/firebase-action@master
+        with:
+          args: appdistribution:distribute ${{steps.sign_app.outputs.signedReleaseFile}} --app ${{ secrets.FIREBASE_ANDROID_APP_ID }} --groups "testers"
+        env:
+          GCP_SA_KEY: ${{ secrets.FB_SA_KEY }}
+
+  build_ios:
+    if: ${{ fromJson(needs.set_env.outputs.variables).mobile_deploy == 'ios' || fromJson(needs.set_env.outputs.variables).mobile_deploy == 'both' }}
+    needs: set_env
+    name: Build iOS IPA
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Angular Web App
+        run: ${{ fromJson(needs.set_env.outputs.variables).target_env == 'prod' && 'npm run build' || 'npm run build:stage' }}
+
+      - name: Install CocoaPods
+        run: |
+          cd ios/App
+          pod install
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Import Certificates & Provisioning Profile
+        run: |
+          echo "${{ secrets.IOS_P12_BASE64 }}" | base64 --decode > cert.p12
+          echo "${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}" | base64 --decode > profile.mobileprovision
+
+      - name: Build iOS Archive & IPA
+        run: |
+          npx cap build ios --ipa --p12-path=cert.p12 --p12-password=${{ secrets.IOS_P12_PASSWORD }} --provisioning-profile=profile.mobileprovision
+
+      - name: Firebase App Distribution (iOS)
+        uses: w9jds/firebase-action@master
+        with:
+          args: appdistribution:distribute ios/App/build/outputs/ipa/*.ipa --app ${{ secrets.FIREBASE_IOS_APP_ID }} --groups "testers"
+        env:
+          GCP_SA_KEY: ${{ secrets.FB_SA_KEY }}
+
+  # trigger_smoke_test could be added here if needed, exactly like in deploy-fe.yml
