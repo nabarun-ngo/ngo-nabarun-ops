@@ -92,6 +92,26 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
+      - name: Set Build Tool Version
+        shell: bash
+        run: |
+          # Use ANDROID_HOME or fallback to common location
+          SDK_PATH=${ANDROID_HOME:-/usr/local/lib/android/sdk}
+          echo "Searching for build tools in: $SDK_PATH/build-tools"
+          
+          if [ -d "$SDK_PATH/build-tools" ]; then
+            # Get latest version using version sort
+            BUILD_TOOL_VERSION=$(ls "$SDK_PATH/build-tools/" | sort -V | tail -n 1)
+            echo "Found Build Tool Version: $BUILD_TOOL_VERSION"
+            echo "BUILD_TOOL_VERSION=$BUILD_TOOL_VERSION" >> $GITHUB_ENV
+            
+            # Add to PATH as well
+            echo "$SDK_PATH/build-tools/$BUILD_TOOL_VERSION" >> $GITHUB_PATH
+          else
+            echo "Error: Build tools directory not found in $SDK_PATH"
+            exit 1
+          fi
+
       - name: Sign APK
         id: sign_app
         uses: r0adkll/sign-android-release@v1
@@ -101,6 +121,7 @@ jobs:
           alias: ${{ secrets.ANDROID_KEY_ALIAS }}
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          buildToolsVersion: ${{ env.BUILD_TOOL_VERSION }}
 
       - name: Firebase App Distribution (Android)
         uses: w9jds/firebase-action@master
