@@ -92,6 +92,12 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease
 
+      - name: Upload Unsigned APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-unsigned-apk
+          path: android/app/build/outputs/apk/release/*.apk
+
       - name: Debug - List Build Tools
         run: ls $ANDROID_HOME/build-tools/
 
@@ -112,7 +118,8 @@ jobs:
         with:
           repository: nabarun-ngo/ngo-nabarun-fe
           tag_name: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
-          files: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          files: |
+            android/app/build/outputs/apk/release/*.apk
           token: ${{ secrets.PAT }}
           generate_release_notes: true
           prerelease: ${{ contains(fromJson(needs.set_env.outputs.variables).fe_tag_name, 'beta') }}
@@ -173,5 +180,16 @@ jobs:
           args: appdistribution:distribute ios/App/build/outputs/ipa/*.ipa --app ${{ secrets.FIREBASE_IOS_APP_ID }} --groups "testers"
         env:
           GCP_SA_KEY: ${{ secrets.FB_SA_KEY }}
+
+      - name: Upload IPA to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          repository: nabarun-ngo/ngo-nabarun-fe
+          tag_name: ${{ fromJson(needs.set_env.outputs.variables).fe_tag_name }}
+          files: |
+            ios/App/build/outputs/ipa/*.ipa
+          token: ${{ secrets.PAT }}
+          generate_release_notes: true
+          prerelease: ${{ contains(fromJson(needs.set_env.outputs.variables).fe_tag_name, 'beta') }}
 
   # trigger_smoke_test could be added here if needed, exactly like in deploy-fe.yml
